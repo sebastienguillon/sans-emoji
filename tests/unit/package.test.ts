@@ -81,6 +81,12 @@ it("creates only a shared extension ZIP and reproducible Firefox review sources"
       "tsconfig.json",
       "package.json",
       "README.md",
+      "PRIVACY.md",
+      "docs/index.html",
+      "docs/privacy.html",
+      "docs/support.html",
+      "docs/styles.css",
+      "docs/icon.png",
       "LICENSE",
       "AGENTS.md",
       "tests/unit/package.test.ts",
@@ -111,6 +117,10 @@ it("creates only a shared extension ZIP and reproducible Firefox review sources"
   );
   expect(Object.keys(archive)).toContain("icons/icon16.png");
   expect(Object.keys(archive)).not.toContain("stale.js");
+  expect(Object.keys(archive)).not.toContain("PRIVACY.md");
+  expect(Object.keys(archive).some((path) => path.startsWith("docs/"))).toBe(
+    false,
+  );
   expect(
     Object.keys(archive).some(
       (path) => /^(chrome|firefox)\//.test(path) || path.endsWith(".zip"),

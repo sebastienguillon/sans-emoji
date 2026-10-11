@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Privacy policy — Sans Emoji</title>
+    <meta name="description" content="How Sans Emoji processes editor content locally, what site access it needs, and how website visits and support messages are handled." />
+    <link rel="canonical" href="https://sebastienguillon.github.io/sans-emoji/privacy.html" />
+    <link rel="icon" type="image/png" href="icon.png" />
+    <link rel="stylesheet" href="styles.css?v=20261011" />
+    <meta name="theme-color" content="#20231d" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header>
+      <div class="wrap">
+        <a class="brand" href="./"><img src="icon.png" width="40" height="40" alt="" />Sans Emoji</a>
+        <nav aria-label="Main navigation"><a href="./">Overview</a><a href="privacy.html" aria-current="page">Privacy</a><a href="support.html">Support</a></nav>
+      </div>
+    </header>
+    <main id="main" class="wrap policy-layout" tabindex="-1">
+      <div class="page-intro">
+        <h1>Your text stays with you.</h1>
+        <p class="lead">Sans Emoji processes editor content in your browser to suppress emoji suggestions. The extension stores no user data and sends none to the developer or any other service.</p>
+        <p class="meta">Privacy policy · Updated 11 October 2026</p>
+      </div>
+      <aside class="policy-index">
+        <nav aria-label="Privacy policy sections">
+          <p class="index-title">On this page</p>
+          <ol>
+            <li><a href="#where">Where the extension runs</a></li>
+            <li><a href="#reads">What it reads and why</a></li>
+            <li><a href="#stores">Storage and retention</a></li>
+            <li><a href="#sends">What it sends</a></li>
+            <li><a href="#permissions">Permissions</a></li>
+            <li><a href="#choices">Your choices</a></li>
+            <li><a href="#limited-use">Limited use</a></li>
+            <li><a href="#website">This website and support</a></li>
+            <li><a href="#questions">Questions</a></li>
+          </ol>
+        </nav>
+      </aside>
+      <div class="article policy-content">
+        <h2 id="where">Where the extension runs</h2>
+        <p>Sans Emoji runs only on HTTPS atlassian.net, atlassian.com and bitbucket.org pages, including their subdomains and frames whose own URLs match. It does not run on other websites. All executable extension code is included in the installed package.</p>
+        <h2 id="reads">What it reads and why</h2>
+        <ul>
+          <li><strong>Editor and suggestion-panel structure.</strong> The extension checks page elements and their attributes to identify colon-triggered emoji autocomplete and hide its suggestion panel.</li>
+          <li><strong>Focus, typing and composition events.</strong> It observes which field is active, when input changes and when input method editor composition starts or ends. This lets it cancel autocomplete in the active editor and wait until composition has finished.</li>
+          <li><strong>Caret position and editor text.</strong> In supported legacy editors, it reads text before the caret to check for a colon query. This can include text from your draft. The check happens locally, and the extension does not save or transmit that text.</li>
+          <li><strong>The page’s protocol and hostname.</strong> These are checked to limit operation to the supported HTTPS domains. The extension does not create a browsing-history log.</li>
+        </ul>
+        <p>Cancellation sends a synthetic Escape key event to the editor. The editor handles its own text and selection; Sans Emoji does not submit your writing.</p>
+        <h2 id="stores">Storage and retention</h2>
+        <p>The extension uses no local or sync storage, cookies, database or saved files. It keeps temporary references to candidate page elements and retry counts in memory while a page is open. These are not an activity log; navigating away or closing the tab clears that page’s extension state.</p>
+        <h2 id="sends">What it sends</h2>
+        <p>Sans Emoji makes no network requests and has no developer server, analytics, telemetry or remote code. It does not send editor text, page content or browsing activity to the developer or any third party.</p>
+        <p>The Atlassian website continues to process and save what you type according to its own behavior and policies. Installing Sans Emoji does not prevent that website from accessing your writing.</p>
+        <h2 id="permissions">Permissions</h2>
+        <p>Access to the supported Atlassian and Bitbucket pages allows the extension to inspect editor elements, hide recognized suggestions and send the cancellation event. It does not request additional extension API permissions, including <code>storage</code>, <code>tabs</code>, <code>cookies</code>, <code>webRequest</code>, <code>downloads</code> or history access.</p>
+        <h2 id="choices">Your choices</h2>
+        <p>You can disable or remove Sans Emoji in your browser’s extension manager. Refresh open Atlassian tabs afterward so the previously loaded script and stylesheet are removed. There is no retained extension data to delete.</p>
+        <h2 id="limited-use">Limited use</h2>
+        <p>Sans Emoji’s use of user data complies with the Chrome Web Store User Data Policy, including the Limited Use requirements. Editor content is used only to provide the stated autocomplete-suppression feature. It is not sold, used for advertising, transferred for unrelated purposes, or used to determine creditworthiness or lending eligibility. The developer does not receive or review users’ editor content through the extension.</p>
+        <h2 id="website">This website and support</h2>
+        <p>This website uses no analytics scripts, third-party fonts, embedded trackers or tracking cookies. When served on GitHub Pages, GitHub processes visitor information under the <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub Privacy Statement</a>, including IP addresses for security purposes. This website hosting is separate from the extension’s operation.</p>
+        <p>If you email the developer, the address and information you choose to send are used to respond to your request and are handled by the email providers involved. Please send only what is needed to explain the issue. Do not include passwords, session tokens, confidential issue text or private project details. You can contact the developer to request deletion of support correspondence.</p>
+        <h2 id="questions">Questions</h2>
+        <p>For privacy questions or support, email Sébastien Guillon at <a href="mailto:guillon.sebastien@gmail.com">guillon.sebastien@gmail.com</a>. The <a href="support.html">support page</a> also includes troubleshooting steps.</p>
+      </div>
+    </main>
+    <footer>
+      <div class="wrap">
+        <p>Sans Emoji is an independent project by Sébastien Guillon. Not affiliated with, endorsed by, or sponsored by Atlassian.</p>
+        <p><a href="privacy.html">Privacy policy</a> · <a href="support.html">Support</a></p>
+      </div>
+    </footer>
+  </body>
+</html>

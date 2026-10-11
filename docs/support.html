@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Support — Sans Emoji</title>
+    <meta name="description" content="Troubleshooting and contact information for Sans Emoji, the extension that suppresses colon-triggered emoji suggestions on Atlassian sites." />
+    <link rel="canonical" href="https://sebastienguillon.github.io/sans-emoji/support.html" />
+    <link rel="icon" type="image/png" href="icon.png" />
+    <link rel="stylesheet" href="styles.css?v=20261011" />
+    <meta name="theme-color" content="#20231d" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header>
+      <div class="wrap">
+        <a class="brand" href="./"><img src="icon.png" width="40" height="40" alt="" />Sans Emoji</a>
+        <nav aria-label="Main navigation"><a href="./">Overview</a><a href="privacy.html">Privacy</a><a href="support.html" aria-current="page">Support</a></nav>
+      </div>
+    </header>
+    <main id="main" class="wrap article" tabindex="-1">
+      <div class="page-intro">
+        <h1>A little help, when you need it.</h1>
+        <p class="lead">Start with the checks below. Atlassian editors change over time, and different editors can handle autocomplete differently.</p>
+      </div>
+      <section class="contact" aria-labelledby="contact-heading">
+        <h2 id="contact-heading">Contact the developer</h2>
+        <p>For questions, bug reports or privacy requests, email Sébastien Guillon at <a href="mailto:guillon.sebastien@gmail.com">guillon.sebastien@gmail.com</a>.</p>
+      </section>
+      <section class="troubleshooting" aria-labelledby="quick-checks">
+        <h2 id="quick-checks">Quick checks</h2>
+        <details open>
+          <summary>The emoji popup still appears</summary>
+          <p>Check that Sans Emoji is enabled and has access to the page. Refresh your Atlassian tab after installation or an update. Supported pages use HTTPS on atlassian.net, atlassian.com or bitbucket.org, including subdomains. If it still appears, that editor may use markup the extension does not yet recognize.</p>
+        </details>
+        <details>
+          <summary>Enter or Tab acts on an invisible suggestion</summary>
+          <p>Press Escape to leave autocomplete. Some editors ignore the extension’s cancellation event even though the suggestion panel is hidden. If the problem continues, disable Sans Emoji and refresh the tab, then report the browser and editor you were using.</p>
+        </details>
+        <details>
+          <summary>How do I insert an emoji?</summary>
+          <p>Use the editor’s toolbar emoji picker. Sans Emoji suppresses colon-triggered searches, including intentional queries such as :smile. Existing emoji are left alone.</p>
+        </details>
+        <details>
+          <summary>Does it work on our company’s own Jira domain?</summary>
+          <p>Only if the page is on one of the supported domains above. Custom company domains, self-hosted installations elsewhere and frames with unrelated URLs are outside the extension’s scope.</p>
+        </details>
+        <details>
+          <summary>Where are the settings?</summary>
+          <p>There are no settings or toolbar popup. Sans Emoji works automatically on supported pages. To turn it off, disable it in your browser’s extension manager and refresh your Atlassian tabs.</p>
+        </details>
+        <details>
+          <summary>Firefox removed my temporary installation</summary>
+          <p>Temporary add-ons are removed when Firefox restarts. For local testing, load the built manifest again through about:debugging. Permanent installation in standard Firefox requires Mozilla signing. Sans Emoji requires Firefox 140 or later.</p>
+        </details>
+        <details>
+          <summary>I rebuilt the extension, but nothing changed</summary>
+          <p>Reload Sans Emoji in the browser’s extension manager, then refresh your Atlassian tabs. Both browsers now use the same dist folder. If you previously loaded a chrome or firefox subfolder, remove that old development installation and follow the <a href="https://github.com/sebastienguillon/sans-emoji#install-locally">current installation instructions</a>.</p>
+        </details>
+      </section>
+      <section aria-labelledby="reporting">
+        <h2 id="reporting">When reporting a problem</h2>
+        <ul>
+          <li>Your browser and version, operating system and Sans Emoji version.</li>
+          <li>The Atlassian product and editor you were using, and whether the page is on a supported domain.</li>
+          <li>Steps to reproduce the issue with sample text such as “Bonjour : suite”.</li>
+          <li>What you expected and what happened instead, including any unexpected Enter or Tab behavior.</li>
+        </ul>
+        <p>A screenshot can help, but remove confidential issue text, private project names, personal details, passwords and session information. You do not need to share an internal issue URL.</p>
+        <p>For details about data handling, read the <a href="privacy.html">privacy policy</a>.</p>
+      </section>
+    </main>
+    <footer>
+      <div class="wrap">
+        <p>Sans Emoji is an independent project by Sébastien Guillon. Not affiliated with, endorsed by, or sponsored by Atlassian.</p>
+        <p><a href="privacy.html">Privacy policy</a> · <a href="support.html">Support</a></p>
+      </div>
+    </footer>
+  </body>
+</html>

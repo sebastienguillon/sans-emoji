@@ -12,6 +12,7 @@ export const SOURCE_PATHS = [
   "assets",
   "tests",
   "release-notes",
+  "docs",
   ".github",
   "package.json",
   "pnpm-lock.yaml",
@@ -23,6 +24,7 @@ export const SOURCE_PATHS = [
   ".node-version",
   ".gitignore",
   "README.md",
+  "PRIVACY.md",
   "LICENSE",
   "AGENTS.md",
 ] as const;

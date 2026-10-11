@@ -1,155 +1,223 @@
 # Sans Emoji
 
-A Manifest V3 extension for Chrome and Firefox that dismisses colon-triggered emoji autocomplete on Atlassian sites. Particularly useful for French text such as `Bonjour : voici les détails`. Both browsers use the same build in `dist/`.
+Sans Emoji hides colon-triggered emoji suggestions on Atlassian sites and asks the editor to cancel autocomplete. It lets you type French punctuation such as `Bonjour : voici les détails` without the suggestion panel flashing on screen.
 
-## Development
+The same Manifest V3 extension works in Chrome and Firefox. It runs automatically on supported pages; there is no settings page or toolbar popup. Intentional `:smile` searches are suppressed too; use the editor's toolbar emoji picker to insert emoji.
 
-Use **Node.js 24+**, **pnpm 12+**, and **TypeScript 7**. The project pins pnpm 12.10.1 and TypeScript 7.0.2; `pnpm-lock.yaml` pins the dependency tree. The extension itself has no runtime dependencies.
+[Install locally](#install-locally) · [Troubleshooting](#troubleshooting) · [Development](#development) · [Packaging and releases](#packaging-and-releases) · [Unreleased changes](release-notes/unreleased.md)
 
-```sh
-pnpm install --frozen-lockfile
-pnpm check
-pnpm build
-```
+## Install locally
 
-`pnpm check` runs the strict TypeScript compiler, Biome, and unit tests with coverage enforcement. The compiler also checks tooling, test files, and configuration. In addition to `strict`, it enables unchecked-index checks, exact optional properties, unused-code checks, explicit index-signature access, and return/fallthrough checks.
+Build requirements: **Node.js 24+** and **pnpm 12+**. The project pins pnpm 12.10.1 and TypeScript 7.0.2; you do not need a global TypeScript installation. See the [Node.js downloads](https://nodejs.org/en/download) and [pnpm installation instructions](https://pnpm.io/installation/).
 
-| Command | Purpose |
-| --- | --- |
-| `pnpm typecheck` | TypeScript 7 strict checking |
-| `pnpm lint` | Formatting and lint checks |
-| `pnpm format` | Apply formatting and safe lint fixes |
-| `pnpm test` | Run unit tests |
-| `pnpm test:watch` | Watch unit tests |
-| `pnpm test:coverage` | Run tests and enforce coverage thresholds |
-| `pnpm check` | Typecheck, lint, and coverage |
-| `pnpm build` | Typecheck and recreate one unpacked `dist/` for Chrome and Firefox |
-| `pnpm package` | Run checks, rebuild, and create one shared extension ZIP plus the Firefox source ZIP |
-| `pnpm test:browser` | Build and run Chromium/Firefox regression tests |
-| `pnpm icons` | Export the icon PNGs; requires Inkscape |
-
-Install pnpm 12 using the [official installation instructions](https://pnpm.io/installation/). pnpm permits only esbuild's dependency build script through `allowBuilds`; normal builds do not require a system `zip` executable or Inkscape.
-
-## Project layout
-
-- `src/dom.ts`: domain restrictions, editable-field detection, and Escape cancellation.
-- `src/controller.ts`: DOM observation, composition handling, bounded retries, and cleanup.
-- `src/content.ts`: the browser content-script entry point.
-- `tooling/`: typed bundling, ZIP packaging, and icon export.
-- `scripts/`: typed command entry points, run directly by Node.js.
-- `extension/`: shared manifest, popup suppression stylesheet, and committed PNG icons.
-- `assets/icon.svg`: editable neutral-face icon with a red slash and no prohibition circle.
-- `tests/unit/`: Vitest tests for every runtime and tooling module.
-- `tests/e2e/`: typed Playwright fixtures and browser tests.
-- `dist/`: generated shared extension (`manifest.json`, `content.js`, `content.css`, icons, and license), plus ZIPs after packaging.
-- `release-notes/`: release notes for each published version.
-- `AGENTS.md`: project conventions and release-note requirements.
-
-esbuild produces one standalone content-script bundle targeting Chrome and Firefox, with no imports. The build copies `extension/manifest.json` unchanged: it includes the Firefox extension ID, minimum version, and no-data declaration in `browser_specific_settings`, which Chrome ignores. Packaging uses fflate and fixed ZIP timestamps for reproducible archives.
-
-## Versioning
-
-Uses calendar versioning (`YYYY.M.D`), starting at **2026.10.10** (October 10, 2026). The components are the release year, month, and day, with no leading zeros; the last component is the day of the month, not a release counter. Update both `package.json` and `extension/manifest.json` when releasing; the build rejects mismatched versions.
-
-## Install the extension
-
-Run `pnpm build` first.
-
-**Chrome:** open `chrome://extensions`, enable **Developer mode**, choose **Load unpacked**, and select `dist/`. Reload open Atlassian tabs.
-
-**Firefox:** open `about:debugging#/runtime/this-firefox`, choose **Load Temporary Add-on**, and select `dist/manifest.json`. Reload open Atlassian tabs. This installation lasts until Firefox restarts. Permanent installation in standard Firefox requires Mozilla signing, either for an AMO listing or unlisted distribution. Requires Firefox 140+.
-
-`pnpm build` clears and recreates `dist/`, removing stale files, old browser subfolders, and previously generated ZIPs. It produces only the unpacked extension; run `pnpm package` to generate ZIPs again.
-
-If you previously loaded `dist/chrome` or `dist/firefox/manifest.json`, remove that old development installation and load the shared path above. For subsequent changes, run `pnpm build`, click **Reload** for the extension in the browser's extension manager, and refresh your Atlassian tabs. Disable the extension through the browser's extensions manager and reload the page to turn it off.
-
-## Package for distribution
-
-After updating both version fields and writing `release-notes/<version>.md`, run:
-
-```sh
-pnpm install --frozen-lockfile
-pnpm package
-```
-
-This command runs typechecking, linting, and unit tests with coverage, rebuilds the shared `dist/` folder, and writes:
-
-| Archive | Purpose |
-| --- | --- |
-| `dist/sans-emoji.zip` | Upload the same extension ZIP to the Chrome Web Store or Mozilla Add-ons for listing or unlisted signing |
-| `dist/sans-emoji-sources.zip` | Attach separately as the matching Firefox review source |
-
-The shared extension ZIP contains the build used by both browsers. Only extension assets go into it; it excludes source files and other archives. Packaging removes obsolete browser-specific ZIPs and produces exactly the two archives above.
-
-The source archive contains the current local source files (including uncommitted edits), build scripts, configuration, lockfile, tests, committed icons, documentation, and release notes. It excludes dependencies, Git metadata, and generated output through an explicit input allowlist. Packaging does not require a Git checkout. The archives use stable timestamps and file ordering so identical inputs produce identical packages.
-
-The extension ZIP is unsigned. Packaging does not publish it or obtain Mozilla signing. Firefox requires a signed add-on for permanent installation in standard releases; renaming a ZIP to `.xpi` does not sign it.
-
-### Rebuild the Firefox review sources
-
-Extract `sans-emoji-sources.zip` into an empty directory. On macOS or Linux, use Node.js 24+ and pnpm 12.10.1 (pinned in `package.json`), then run from that directory:
+From the repository root:
 
 ```sh
 pnpm install --frozen-lockfile
 pnpm build
 ```
 
-The resulting `dist/` files reproduce the contents of `sans-emoji.zip`. No Inkscape, browser installation, Git metadata, or global TypeScript installation is needed. Run `pnpm package` instead to regenerate both archives, including the source ZIP. See [Mozilla's source submission requirements](https://extensionworkshop.com/documentation/publish/source-code-submission/).
+This creates one unpacked extension in `dist/`. Load that directory, not the repository root or `extension/`.
 
+### Chrome
+
+1. Open `chrome://extensions`.
+2. Enable **Developer mode**.
+3. Choose **Load unpacked** and select `dist/`.
+4. Refresh your open Atlassian tabs.
+
+See Google's [unpacked extension installation guide](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world#load-unpacked).
+
+### Firefox
+
+Use Firefox **140 or later**.
+
+1. Open `about:debugging#/runtime/this-firefox`.
+2. Choose **Load Temporary Add-on** and select `dist/manifest.json`.
+3. Refresh your open Atlassian tabs.
+
+A [temporary installation](https://extensionworkshop.com/documentation/develop/temporary-installation-in-firefox/) lasts until Firefox restarts or you remove the add-on. Permanent installation in standard Firefox requires [Mozilla signing](https://extensionworkshop.com/documentation/publish/signing-and-distribution-overview/), either for an AMO listing or unlisted distribution.
+
+### Update or disable a local installation
+
+After changing the source, run `pnpm build`, reload Sans Emoji in the browser's extension manager, and refresh your Atlassian tabs. To disable it, turn it off in the extension manager and refresh the tabs.
+
+If you previously loaded `dist/chrome` or `dist/firefox/manifest.json`, remove that development installation and load the shared path above once.
+
+**Build output is disposable:** `pnpm build` clears and recreates `dist/`, including any previously generated ZIPs. Run `pnpm package` when you need fresh archives.
 
 ## Behavior and scope
 
-- Runs only on HTTPS `atlassian.net`, `atlassian.com`, `bitbucket.org`, and their subdomains, including frames with matching URLs.
-- Dismisses all colon-triggered emoji autocomplete, including intentional `:smile` searches. Separate toolbar emoji pickers, existing emoji, mentions, and slash commands are not targeted.
-- Supports ordinary spaces and non-breaking French spaces without rewriting punctuation or inserting invisible characters.
-- Uses the editor's own Escape handler to preserve text and selection. It does not intercept normal typing or implement its own undo operations.
-- Loads a popup suppression stylesheet at document start so recognized emoji suggestions stay invisible from their first frame, including during IME composition and delayed cancellation. The inline query field and typed text remain visible.
-- No network requests, telemetry, storage, background process, or additional API permissions. Site access is required only for the listed domains.
-- Custom company domains, self-hosted installations elsewhere, and frames on unrelated domains are excluded.
+- Runs on HTTPS `atlassian.net`, `atlassian.com`, `bitbucket.org`, and their subdomains, including frames whose own URLs match.
+- Hides recognized emoji suggestion panels from their first frame, including while cancellation is delayed or input method editor (IME) composition is in progress.
+- Sends Escape to the active query field or eligible legacy editor, letting the editor restore its own text and selection. It does not rewrite punctuation, insert invisible characters, or implement undo operations.
+- Supports ordinary spaces, non-breaking spaces (U+00A0), and narrow non-breaking spaces (U+202F).
+- Does not target existing emoji or separate toolbar emoji pickers. Mention and slash-command menus remain visible when no colon query is present.
+- Does not run on custom company domains, other self-hosted domains, or frames with unrelated URLs.
 
-The controller recognizes Atlaskit's `[data-query-prefix=":"][contenteditable="true"]` input and the older `.ak-emoji-typeahead` popup. Legacy dismissal additionally requires a colon query immediately before the active editor's caret. A MutationObserver handles newly mounted editors, and IME composition finishes before dismissal.
+### Privacy and permissions
 
-The stylesheet hides `.ak-emoji-typeahead` and hides `.fabric-editor-typeahead` while a colon query field exists. It preserves popup geometry so positioning and legacy cancellation still work. Mentions and slash commands remain visible when no colon query is present; separate toolbar emoji pickers are not targeted.
+The extension makes no network requests, stores no data, and has no telemetry or background process. Its scripts inspect the page's editor DOM locally to find and dismiss autocomplete. Site access is limited to the domains in [the manifest](extension/manifest.json); no additional extension API permissions are requested. See [PRIVACY.md](PRIVACY.md) for the full data-handling description and [the website policy](docs/privacy.html) for the public-facing version.
 
-If an editor ignores synthetic Escape, retries stop after four attempts and recognized suggestions remain invisible. CSS cannot cancel the editor's internal autocomplete state: an unsupported handler may still consume Enter or Tab. Legacy editors that delegate Escape handling above the focused field may need a dedicated adapter. Changes to Atlassian's internal markup can require updated selectors.
+### How suppression works
 
-The DOM hooks were checked against published `@atlaskit/editor-plugin-type-ahead@27.0.4` and `@atlaskit/emoji@72.5.10`. They are internal conventions, not a stable Atlassian API.
+The stylesheet loads at `document_start`. It hides the older `.ak-emoji-typeahead` popup and hides `.fabric-editor-typeahead` while the document contains a `[data-query-prefix=":"][contenteditable="true"]` query field. The inline query stays visible, and popup geometry is preserved for positioning and legacy detection.
 
-## Testing and coverage
+A `MutationObserver` discovers query fields and popups. Cancellation waits for IME composition to finish and retries up to four times per attempt cycle; further editable input can reset the retries. Legacy cancellation also requires a colon query immediately before the active editor's caret.
 
-Unit coverage includes **every TypeScript file in `src/`, `tooling/`, and `scripts/`**, including command entry points and files not imported by any test. Each file must reach **100% statements, branches, functions, and lines**. There are no coverage-ignore directives or production-code exclusions. Test fixtures, declarative configuration, generated bundles, and third-party dependencies are outside the unit coverage denominator.
+These selectors are internal Atlaskit conventions, not a stable API. They were inspected in `@atlaskit/editor-plugin-type-ahead@27.0.4` and `@atlaskit/emoji@72.5.10`; those packages are not extension dependencies.
 
-The suite checks domain boundaries, nullable selections, French spacing, modern and legacy menus, focus, late mounting/handler attachment, IME composition, bounded retries, listener cleanup, packaging, version consistency, deterministic ZIPs, and icon exporter commands/failures. Build and packaging tests bundle real temporary TypeScript projects, verify removal of obsolete build output, preserve the shared manifest and Firefox metadata, check that packaging creates exactly the two expected archives, and rebuild the extracted review sources to reproduce both ZIPs byte for byte. jsdom lacks layout and `isContentEditable`, so unit fixtures supply those browser primitives.
+### Known limitations
 
-Coverage reports are written to `coverage/index.html`, `coverage/lcov.info`, and `coverage/coverage-summary.json`.
+- If an editor ignores synthetic Escape, recognized suggestions stay hidden but the editor may still consume Enter or Tab. Legacy editors that handle Escape above the focused field may need a dedicated adapter.
+- The modern CSS rule applies to matching suggestion panels throughout the document while any colon query exists. Simultaneous autocomplete menus in multiple editors are not independently scoped.
+- Atlassian markup changes may require new selectors. Automated tests use representative fixtures and do not establish compatibility with every live editor or verify its real undo/redo transactions.
 
-Install the test browsers once, then run the browser suite:
+## Troubleshooting
+
+| Symptom | What to check or do |
+| --- | --- |
+| The popup still appears | Rebuild, reload the extension, and refresh the page. Check that the editor's URL is in scope. If it persists on a supported URL, the editor may use different markup. |
+| Enter or Tab acts on an invisible suggestion | Press Escape to exit autocomplete. If the problem persists, disable the extension and refresh the page; the editor may not accept synthetic cancellation. |
+| Firefox no longer has the extension after a restart | Load `dist/manifest.json` again. Temporary installations do not persist across restarts. |
+| The browser cannot find the extension files | Run `pnpm build` from the repository root, then load the shared `dist/` path. Replace installations pointing to an old browser subfolder. |
+| A build reports that versions must match | Set the same calendar version in `package.json` and `extension/manifest.json`. |
+| Distribution ZIPs disappeared | `pnpm build` and `pnpm test:browser` recreate `dist/`. Run `pnpm package` to regenerate the two archives. |
+
+When reporting an editor problem, include the browser version, editor type, domain, and a short reproduction using non-sensitive text.
+
+## Development
+
+Use pnpm consistently and keep `pnpm-lock.yaml`. All executable project code is strict TypeScript 7. The extension has no runtime dependencies; build and test tools are development dependencies.
+
+| Command | Purpose |
+| --- | --- |
+| `pnpm typecheck` | Check runtime code, tooling, scripts, tests, and configuration |
+| `pnpm lint` | Check formatting and lint rules with Biome |
+| `pnpm format` | Apply formatting and safe lint fixes |
+| `pnpm test` | Run unit tests |
+| `pnpm test:watch` | Watch unit tests |
+| `pnpm test:coverage` | Run unit tests and enforce per-file coverage thresholds |
+| `pnpm check` | Run typechecking, linting, and unit coverage checks |
+| `pnpm build` | Typecheck and recreate the shared unpacked `dist/` build |
+| `pnpm test:browser` | Rebuild and run Chromium/Firefox regression tests |
+| `pnpm package` | Run `pnpm check`, rebuild, and create extension and source ZIPs |
+| `pnpm icons` | Regenerate committed PNG icons; requires Inkscape on `PATH` |
+
+`pnpm build` does not run lint or tests. `pnpm package` runs unit checks but does not run browser tests. The workspace allows esbuild's dependency build script through `allowBuilds`; normal builds need neither Inkscape nor a system `zip` executable.
+
+### Project layout
+
+| Path | Contents |
+| --- | --- |
+| `src/` | Content-script entry point, DOM checks, cancellation, and controller |
+| `extension/` | Shared manifest, popup suppression CSS, and committed PNG icons |
+| `docs/` | Static public overview, privacy policy, and support website |
+| `tooling/` | Bundling, ZIP packaging, and icon generation |
+| `scripts/` | TypeScript command entry points, run directly by Node.js |
+| `tests/unit/` | Runtime and tooling unit tests |
+| `tests/e2e/` | Playwright browser fixtures and regression tests |
+| `assets/icon.svg` | Editable icon source |
+| `dist/` | Generated extension files and, after packaging, two ZIPs |
+| `release-notes/` | Versioned notes and pending changes |
+| `AGENTS.md` | Project conventions and release requirements |
+
+esbuild targets Chrome 120 and Firefox 140 and produces one standalone content script. The build copies the shared manifest unchanged, including Firefox's extension ID, minimum version, and no-data declaration. Chrome [ignores `browser_specific_settings`](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/browser_specific_settings).
+
+### Tests and their limits
 
 ```sh
+pnpm check
 pnpm exec playwright install chromium firefox
 pnpm test:browser
 ```
 
-Chromium loads the actual unpacked extension from `dist/` in isolated temporary profiles. Firefox runs the same `dist/content.js` through Playwright injection and embeds `dist/content.css` in matching fixture documents; this checks browser behavior, not Firefox add-on installation/signing. All page requests are fulfilled with local HTML; tests never access Atlassian accounts. The tests exercise native keyboard input, French spacing, Enter/Tab, unrelated domains, mentions, slash commands, IME handling, legacy menus, and matching frames. Popup visibility is checked synchronously at mount and on animation frames, including delayed and unsupported Escape handlers.
+On Linux, Playwright may also need system libraries; CI installs them with `pnpm exec playwright install --with-deps chromium firefox`.
 
-GitHub Actions runs the strict checks, coverage gate, build, and browser tests on pushes and pull requests, and uploads reports and packages. Distribution packaging runs in CI through `pnpm package`.
+Every TypeScript file in `src/`, `tooling/`, and `scripts/` must reach **100% statements, branches, functions, and lines**, per file. There are no coverage-ignore directives or production-code exclusions. Fixtures, declarative configuration, generated bundles, and dependencies are outside that denominator. Reports are written to `coverage/index.html`, `coverage/lcov.info`, and `coverage/coverage-summary.json`.
 
-These tests use representative editor DOM fixtures. They cannot establish compatibility with every live Jira/Bitbucket editor or verify those editors' real undo/redo transactions. On a signed-in tenant, check `Bonjour : suite`, NBSP/narrow-NBSP variants, Enter/Tab, undo/redo, mentions, slash commands, and the toolbar emoji picker. No issue submission is needed.
+Unit tests cover domain boundaries, caret checks, French spacing, focus, IME handling, retries, and cleanup. Build and packaging tests use temporary projects, reject missing inputs and symlinks in source archives, check stale-output cleanup, and rebuild extracted sources to reproduce both ZIPs byte for byte. jsdom fixtures supply layout and `isContentEditable`, which jsdom does not implement.
 
-## Icon
+Chromium tests load the actual unpacked extension. Firefox tests inject the compiled script and stylesheet; they do not test Firefox add-on installation or signing. Both use local HTML fixtures with intercepted requests and never access an Atlassian account. They check typing, Enter/Tab, mentions, slash commands, toolbar pickers, domain scope, frames, IME handling, and popup visibility at mount and on animation frames. Playwright writes its report to `playwright-report/` and retains traces for failed tests.
 
-The icon is a yellow neutral face inspired by 😐, crossed by a red diagonal slash with no prohibition circle. Transparent PNGs at 16–512 px are committed in `extension/icons/`. Edit `assets/icon.svg` and run `pnpm icons` to regenerate them.
+Before a release, also check `Bonjour : suite`, both non-breaking-space variants, Enter/Tab, undo/redo, mentions, slash commands, and the toolbar emoji picker in a signed-in editor. Record the browser and editor tested; no issue submission is needed.
 
-## License
+[GitHub Actions](.github/workflows/ci.yml) runs packaging checks and browser tests on pushes and pull requests, then attempts to upload coverage, browser reports, and `dist/` even if a preceding step fails.
 
-Sans Emoji is open source under the [MIT License](LICENSE). Copyright © 2026 Sébastien Guillon. The license is included in local builds and both distribution archives.
+## Packaging and releases
 
-`private: true` in `package.json` prevents accidental publication to the npm registry; the GitHub repository and extension are public and MIT-licensed.
+Versions use `YYYY.M.D`, with no leading zeros. The final component is the day of the month, not a release counter. The version in `package.json` must match `extension/manifest.json`; the build rejects a mismatch.
 
-## References
+[Unreleased changes](release-notes/unreleased.md) track work after the [2026.10.10 notes](release-notes/2026.10.10.md). Historical notes describe that version's behavior and validation, not the current checkout.
 
-- [Jira request JRACLOUD-39164](https://jira.atlassian.com/browse/JRACLOUD-39164)
-- [Confluence Server request CONFSERVER-92667](https://jira.atlassian.com/browse/CONFSERVER-92667)
-- [Chrome content scripts](https://developer.chrome.com/docs/extensions/develop/concepts/content-scripts)
-- [Firefox temporary installation](https://extensionworkshop.com/documentation/develop/temporary-installation-in-firefox/)
-- [Firefox signing and distribution](https://extensionworkshop.com/documentation/publish/signing-and-distribution-overview/)
+For a release:
+
+1. Update both version fields.
+2. Write `release-notes/<version>.md` from the changes since the previous version. Include user-visible changes, fixes, known limitations, and only validation actually completed. Use the unreleased notes as a starting point.
+3. Install dependencies and browser binaries, then validate and package:
+
+   ```sh
+   pnpm install --frozen-lockfile
+   pnpm exec playwright install chromium firefox
+   pnpm package
+   pnpm exec playwright test
+   ```
+
+4. Complete the manual editor checks above. If you update release notes or other source files after packaging, run `pnpm package` again so the review source ZIP matches the final files.
+5. Include the versioned release notes with the upload or release handoff. Clear the changes incorporated from the unreleased notes and regenerate packages if those notes changed.
+
+The direct `pnpm exec playwright test` command uses the existing build and preserves its ZIPs. The `pnpm test:browser` shortcut rebuilds first and removes them.
+
+Packaging leaves the unpacked build in `dist/` and creates exactly two archives:
+
+| Archive | Use |
+| --- | --- |
+| `dist/sans-emoji.zip` | The same extension ZIP for Chrome Web Store or Mozilla Add-ons submission |
+| `dist/sans-emoji-sources.zip` | Matching sources to attach separately for Firefox review |
+
+The extension ZIP contains only the manifest, bundled script, stylesheet, icons, and license. The source ZIP includes current local files, including uncommitted edits: source, tooling, tests, configuration, lockfile, committed assets, documentation, and release notes. Its [allowlist](tooling/package.ts) excludes dependencies, Git metadata, and generated output. Keep that list current when adding build inputs.
+
+Packaging needs no Git checkout. Fixed ZIP timestamps and sorted paths make archives reproducible for identical inputs. The extension ZIP is unsigned; this command does not publish it or request Mozilla signing. Renaming it to `.xpi` does not sign it.
+
+### Rebuild the Firefox review sources
+
+Extract `sans-emoji-sources.zip` into an empty directory. On macOS or Linux, install Node.js 24+ and pnpm 12.10.1, then run from the extracted directory:
+
+```sh
+pnpm install --frozen-lockfile
+pnpm build
+```
+
+The resulting `dist/` files reproduce `sans-emoji.zip`. This build needs no browser installation, Inkscape, Git metadata, system `zip`, or global TypeScript. Use `pnpm package` to recreate both ZIPs instead. See [Mozilla's source submission requirements](https://extensionworkshop.com/documentation/publish/source-code-submission/).
+
+## Public website and store URLs
+
+The `docs/` folder contains a static overview, privacy policy, and support page, matching SG-X's cream-and-olive visual style. It uses a shared stylesheet and the extension's icon, with no JavaScript, third-party fonts, analytics, or site build step. The pages use the same developer contact as SG-X: `guillon.sebastien@gmail.com`.
+
+Preview locally with Python 3:
+
+```sh
+python3 -m http.server 8765 --bind 127.0.0.1 --directory docs
+```
+
+Open `http://127.0.0.1:8765/`. Stop the server with Ctrl+C. Site files are included in the Firefox review source ZIP and excluded from the extension ZIP.
+
+To publish with GitHub Pages, commit and push the files, then configure the repository's **Settings → Pages → Build and deployment** to **Deploy from a branch**, using **master** and **/docs**. See [GitHub's publishing-source instructions](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site). Everything in `docs/` will be public; keep it limited to website assets and public information.
+
+These are the intended URLs, not a record of a completed deployment. After publishing, check that each loads publicly before using it in the Chrome Web Store dashboard:
+
+| Dashboard field | URL |
+| --- | --- |
+| Homepage | `https://sebastienguillon.github.io/sans-emoji/` |
+| Privacy policy | `https://sebastienguillon.github.io/sans-emoji/privacy.html` |
+| Support | `https://sebastienguillon.github.io/sans-emoji/support.html` |
+
+Chrome's [privacy guidance](https://developer.chrome.com/docs/webstore/program-policies/user-data-faq) requires disclosure of local processing too. The policy therefore explains editor and caret access, even though the extension stores and transmits no data. Keep the store's [privacy fields](https://developer.chrome.com/docs/webstore/cws-dashboard-privacy), `PRIVACY.md`, and `docs/privacy.html` consistent with the code. Update the support page when behavior changes. Store approval is a separate review; preparing these pages does not publish the extension.
+
+The homepage currently links to local installation instructions. Replace that action with the verified store listing URL when a listing is available. The canonical URLs assume the GitHub Pages address above; update them if the hosting address changes.
+
+## Icon and license
+
+The icon is a yellow neutral face with a red diagonal slash and transparent background. To change it, edit [assets/icon.svg](assets/icon.svg), run `pnpm icons`, copy `extension/icons/icon512.png` to `docs/icon.png`, and commit the regenerated images.
+
+Sans Emoji is licensed under the [MIT License](LICENSE), copyright © 2026 Sébastien Guillon. The license is included in the unpacked build and both archives. `private: true` in `package.json` prevents accidental publication to the package registry; it does not determine the repository's visibility.
