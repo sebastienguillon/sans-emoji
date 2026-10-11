@@ -1,0 +1,15 @@
+/* Keep layout available for the editor's positioning and Escape cancellation.
+ * The query field is separate from the popup: never hide the user's text.
+ * Declarative content CSS applies before the page's first paint, including
+ * while focus/handlers are mounting or IME composition delays cancellation.
+ */
+.ak-emoji-typeahead,
+:root:has([data-query-prefix=":"][contenteditable="true"])
+  .fabric-editor-typeahead {
+  /* biome-ignore lint/complexity/noImportantStyles: Override the host application's popup styles. */
+  opacity: 0 !important;
+  /* biome-ignore lint/complexity/noImportantStyles: Override the host application's popup styles. */
+  visibility: hidden !important;
+  /* biome-ignore lint/complexity/noImportantStyles: Override the host application's popup styles. */
+  pointer-events: none !important;
+}

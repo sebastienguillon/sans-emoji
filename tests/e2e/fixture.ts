@@ -4,6 +4,8 @@ export function mountEditor(options: {
   space: string;
   trigger: string;
   legacy: boolean;
+  handlerDelay?: number;
+  ignoreEscape?: boolean;
 }): void {
   document.body.innerHTML =
     '<button id="picker" type="button">Emoji picker</button><div id="status"></div>';
@@ -39,25 +41,58 @@ export function mountEditor(options: {
       selection?.addRange(range);
     }
   };
+  const mountMenu = (className: string): HTMLElement => {
+    const menu = document.createElement("div");
+    menu.id = "suggestions";
+    menu.className = className;
+    menu.style.cssText =
+      "opacity: 1; visibility: visible; pointer-events: auto";
+    menu.textContent = "Suggestions";
+    document.body.append(menu);
+    // Record visibility synchronously, before any observer/timer can dismiss it.
+    const style = getComputedStyle(menu);
+    const status = document.querySelector("#status");
+    status?.setAttribute(
+      "data-visible-at-mount",
+      String(style.visibility !== "hidden" && style.opacity !== "0"),
+    );
+    const sampleFrame = (): void => {
+      if (!menu.isConnected) return;
+      const frameStyle = getComputedStyle(menu);
+      if (frameStyle.visibility !== "hidden" && frameStyle.opacity !== "0")
+        status?.setAttribute("data-visible-frame", "true");
+      requestAnimationFrame(sampleFrame);
+    };
+    requestAnimationFrame(sampleFrame);
+    return menu;
+  };
+  const registerCancellation = (
+    target: HTMLElement,
+    cancel: () => void,
+  ): void => {
+    const register = (): void => {
+      target.addEventListener("keydown", (event) => {
+        if (
+          event instanceof KeyboardEvent &&
+          event.key === "Escape" &&
+          !options.ignoreEscape
+        ) {
+          cancel();
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      });
+    };
+    if (options.handlerDelay) setTimeout(register, options.handlerDelay);
+    else register();
+  };
   editor.addEventListener("input", () => {
     const text =
       editor instanceof HTMLTextAreaElement ? editor.value : editor.textContent;
     if (!text.endsWith(options.trigger)) return;
     if (options.legacy) {
-      const menu = document.createElement("div");
-      menu.className = "ak-emoji-typeahead";
-      menu.textContent = "Emoji suggestions";
-      document.body.append(menu);
-      editor.addEventListener(
-        "keydown",
-        (event) => {
-          if (event instanceof KeyboardEvent && event.key === "Escape") {
-            menu.remove();
-            event.preventDefault();
-          }
-        },
-        { once: true },
-      );
+      const menu = mountMenu("ak-emoji-typeahead");
+      registerCancellation(editor, () => menu.remove());
       return;
     }
     editor.textContent = text.slice(0, -1);
@@ -67,15 +102,13 @@ export function mountEditor(options: {
     query.setAttribute("data-query-prefix", options.trigger);
     query.tabIndex = -1;
     query.textContent = options.trigger;
-    query.addEventListener("keydown", (event) => {
-      if (event instanceof KeyboardEvent && event.key === "Escape") {
-        query.replaceWith(document.createTextNode(options.trigger));
-        focusEnd();
-        event.preventDefault();
-        event.stopPropagation();
-      }
-    });
     editor.append(query);
+    const menu = mountMenu("fabric-editor-typeahead");
+    registerCancellation(query, () => {
+      menu.remove();
+      query.replaceWith(document.createTextNode(options.trigger));
+      focusEnd();
+    });
     query.focus();
   });
   focusEnd();

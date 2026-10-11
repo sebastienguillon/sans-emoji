@@ -2,6 +2,11 @@
   "name": "sans-emoji",
   "version": "2026.10.10",
   "private": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sebastienguillon/sans-emoji.git"
+  },
   "type": "module",
   "description": "Dismiss colon-triggered emoji autocomplete on Atlassian sites.",
   "packageManager": "pnpm@12.10.1",

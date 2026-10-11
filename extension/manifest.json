@@ -3,6 +3,13 @@
   "name": "Sans Emoji",
   "version": "2026.10.10",
   "description": "Dismiss colon-triggered emoji autocomplete on Atlassian sites without changing your text.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "sans-emoji@extensions.local",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": { "required": ["none"] }
+    }
+  },
   "content_scripts": [
     {
       "matches": [
@@ -11,6 +18,7 @@
         "https://*.bitbucket.org/*"
       ],
       "js": ["content.js"],
+      "css": ["content.css"],
       "run_at": "document_start",
       "all_frames": true
     }

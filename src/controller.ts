@@ -34,7 +34,7 @@ export function startController(document: Document): () => void {
       }
       const count = attempts.get(candidate) ?? 0;
       if (count >= 4) {
-        // Fail open: never hide a still-active keyboard menu or retry forever.
+        // Stop retrying unsupported handlers; declarative CSS keeps the popup hidden.
         candidates.delete(candidate);
         continue;
       }

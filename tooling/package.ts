@@ -23,6 +23,7 @@ export const SOURCE_PATHS = [
   ".node-version",
   ".gitignore",
   "README.md",
+  "LICENSE",
   "AGENTS.md",
 ] as const;
 
@@ -52,13 +53,13 @@ export async function packageProject(root: string): Promise<void> {
   // Read sources first so missing inputs fail before creating new packages.
   const sources = await archivePaths(root, SOURCE_PATHS);
   await buildProject(root);
-  for (const browser of ["chrome", "firefox"] as const) {
-    const archive = await archivePaths(join(root, "dist", browser), [
-      "manifest.json",
-      "content.js",
-      "icons",
-    ]);
-    await writeFile(join(root, "dist", `sans-emoji-${browser}.zip`), archive);
-  }
+  const archive = await archivePaths(join(root, "dist"), [
+    "LICENSE",
+    "manifest.json",
+    "content.js",
+    "content.css",
+    "icons",
+  ]);
+  await writeFile(join(root, "dist/sans-emoji.zip"), archive);
   await writeFile(join(root, "dist/sans-emoji-sources.zip"), sources);
 }
