@@ -1,6 +1,6 @@
 {
   "name": "sans-emoji",
-  "version": "2026.10.0",
+  "version": "2026.10.10",
   "private": true,
   "type": "module",
   "description": "Dismiss colon-triggered emoji autocomplete on Atlassian sites.",
@@ -19,7 +19,8 @@
     "test:browser": "pnpm build && playwright test",
     "check": "pnpm typecheck && pnpm lint && pnpm test:coverage",
     "build": "pnpm typecheck && node scripts/build.ts",
-    "icons": "node scripts/icons.ts"
+    "icons": "node scripts/icons.ts",
+    "package": "pnpm check && node scripts/package.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",

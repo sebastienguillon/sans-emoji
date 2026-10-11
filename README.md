@@ -23,7 +23,8 @@ pnpm build
 | `pnpm test:watch` | Watch unit tests |
 | `pnpm test:coverage` | Run tests and enforce coverage thresholds |
 | `pnpm check` | Typecheck, lint, and coverage |
-| `pnpm build` | Typecheck and create Chrome/Firefox folders and ZIPs |
+| `pnpm build` | Typecheck and create unpacked Chrome/Firefox folders for local loading |
+| `pnpm package` | Run checks, rebuild, and create Chrome, Firefox, and source ZIPs |
 | `pnpm test:browser` | Build and run Chromium/Firefox regression tests |
 | `pnpm icons` | Export the icon PNGs; requires Inkscape |
 
@@ -40,13 +41,15 @@ Install pnpm 12 using the [official installation instructions](https://pnpm.io/i
 - `assets/icon.svg`: editable neutral-face icon with a red slash and no prohibition circle.
 - `tests/unit/`: Vitest tests for every runtime and tooling module.
 - `tests/e2e/`: typed Playwright fixtures and browser tests.
-- `dist/`: generated, installable extension folders and ZIPs.
+- `dist/`: generated local extension folders and distribution ZIPs.
+- `release-notes/`: release notes for each published version.
+- `AGENTS.md`: project conventions and release-note requirements.
 
 esbuild produces a standalone content-script bundle with no imports. Packaging uses fflate and fixed ZIP timestamps for reproducible archives.
 
 ## Versioning
 
-Uses calendar versioning (`YYYY.M.PATCH`), starting at **2026.10.0**. Update both `package.json` and `extension/manifest.json` when releasing; the build rejects mismatched versions.
+Uses calendar versioning (`YYYY.M.D`), starting at **2026.10.10** (October 10, 2026). The components are the release year, month, and day, with no leading zeros; the last component is the day of the month, not a release counter. Update both `package.json` and `extension/manifest.json` when releasing; the build rejects mismatched versions.
 
 ## Install the extension
 
@@ -56,7 +59,40 @@ Run `pnpm build` first.
 
 **Firefox:** open `about:debugging#/runtime/this-firefox`, choose **Load Temporary Add-on**, and select `dist/firefox/manifest.json`. Reload open Atlassian tabs. This installation lasts until Firefox restarts. Permanent installation in standard Firefox requires Mozilla signing, either for an AMO listing or unlisted distribution. Requires Firefox 140+.
 
-The build creates `dist/sans-emoji-chrome.zip` and `dist/sans-emoji-firefox.zip`. These are unsigned development builds. Disable the extension through the browser's extensions manager and reload the page to turn it off.
+`pnpm build` only refreshes the unpacked folders; it does not create or update distribution ZIPs. Disable the extension through the browser's extensions manager and reload the page to turn it off.
+
+## Package for distribution
+
+After updating both version fields and writing `release-notes/<version>.md`, run:
+
+```sh
+pnpm install --frozen-lockfile
+pnpm package
+```
+
+This command runs typechecking, linting, and unit tests with coverage, rebuilds both browser folders, and writes:
+
+| Archive | Purpose |
+| --- | --- |
+| `dist/sans-emoji-chrome.zip` | Upload to the Chrome Web Store |
+| `dist/sans-emoji-firefox.zip` | Upload to Mozilla Add-ons for listing or unlisted signing |
+| `dist/sans-emoji-sources.zip` | Attach separately as the matching Firefox review source |
+
+The source archive contains the current local source files (including uncommitted edits), build scripts, configuration, lockfile, tests, committed icons, documentation, and release notes. It excludes dependencies, Git metadata, and generated output through an explicit input allowlist. Packaging does not require a Git checkout. The archives use stable timestamps and file ordering so identical inputs produce identical packages.
+
+The extension ZIPs are unsigned. Packaging does not publish them or obtain Mozilla signing. Firefox requires a signed add-on for permanent installation in standard releases; renaming a ZIP to `.xpi` does not sign it.
+
+### Rebuild the Firefox review sources
+
+Extract `sans-emoji-sources.zip` into an empty directory. On macOS or Linux, use Node.js 24+ and pnpm 12.10.1 (pinned in `package.json`), then run from that directory:
+
+```sh
+pnpm install --frozen-lockfile
+pnpm build
+```
+
+The resulting `dist/firefox/` files reproduce the contents of the submitted Firefox ZIP. No Inkscape, browser installation, Git metadata, or global TypeScript installation is needed. Run `pnpm package` instead to regenerate all three archives, including the source ZIP. See [Mozilla's source submission requirements](https://extensionworkshop.com/documentation/publish/source-code-submission/).
+
 
 ## Behavior and scope
 
@@ -90,7 +126,7 @@ pnpm test:browser
 
 Chromium loads the actual unpacked extension in isolated temporary profiles. Firefox runs the compiled content script through Playwright injection; this checks browser behavior, not Firefox add-on installation/signing. All page requests are fulfilled with local HTML; tests never access Atlassian accounts. The tests exercise native keyboard input, French spacing, Enter/Tab, unrelated domains, mentions, slash commands, IME handling, legacy menus, and matching frames.
 
-GitHub Actions runs the strict checks, coverage gate, build, and browser tests on pushes and pull requests, and uploads reports and packages. CI has been configured locally; its first hosted run happens after the project is pushed.
+GitHub Actions runs the strict checks, coverage gate, build, and browser tests on pushes and pull requests, and uploads reports and packages. Distribution packaging runs in CI through `pnpm package`.
 
 These tests use representative editor DOM fixtures. They cannot establish compatibility with every live Jira/Bitbucket editor or verify those editors' real undo/redo transactions. On a signed-in tenant, check `Bonjour : suite`, NBSP/narrow-NBSP variants, Enter/Tab, undo/redo, mentions, slash commands, and the toolbar emoji picker. No issue submission is needed.
 

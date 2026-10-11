@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Sans Emoji",
-  "version": "2026.10.0",
+  "version": "2026.10.10",
   "description": "Dismiss colon-triggered emoji autocomplete on Atlassian sites without changing your text.",
   "content_scripts": [
     {

@@ -1,7 +1,6 @@
-import { cp, mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { build } from "esbuild";
-import { zipSync } from "fflate";
 
 export interface Manifest {
   manifest_version: number;
@@ -67,24 +66,6 @@ export async function buildProject(root: string): Promise<void> {
     await writeFile(
       join(destination, "manifest.json"),
       `${JSON.stringify(browserManifest(manifest, browser), null, 2)}\n`,
-    );
-    const names = [
-      "manifest.json",
-      "content.js",
-      ...(await readdir(join(destination, "icons")))
-        .sort()
-        .map((name) => `icons/${name}`),
-    ];
-    const entries: Record<string, [Uint8Array, { mtime: Date }]> = {};
-    // Stable ZIP timestamps make identical inputs produce identical archives.
-    for (const name of names)
-      entries[name] = [
-        await readFile(join(destination, name)),
-        { mtime: new Date(2000, 0, 1) },
-      ];
-    await writeFile(
-      join(dist, `sans-emoji-${browser}.zip`),
-      zipSync(entries, { level: 9 }),
     );
   }
 }

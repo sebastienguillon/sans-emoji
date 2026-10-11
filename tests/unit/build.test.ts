@@ -1,8 +1,14 @@
 // @vitest-environment node
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { strFromU8, unzipSync } from "fflate";
 import { afterEach, describe, expect, it } from "vitest";
 import {
   browserManifest,
@@ -14,7 +20,7 @@ const roots: string[] = [];
 const manifest: Manifest = {
   manifest_version: 3,
   name: "Sans Emoji",
-  version: "2026.10.0",
+  version: "2026.10.10",
   icons: { "16": "icons/icon16.png" },
 };
 async function fixture(): Promise<string> {
@@ -64,50 +70,47 @@ describe("browser manifests", () => {
     expect(manifest.browser_specific_settings).toBeUndefined();
   });
 });
-describe("package build", () => {
-  it("bundles TypeScript and packages both browsers reproducibly", async () => {
+describe("local build", () => {
+  it("bundles both browsers into clean folders without creating ZIPs", async () => {
     const root = await fixture();
     await mkdir(join(root, "dist/chrome"), { recursive: true });
     await writeFile(join(root, "dist/chrome/stale.js"), "stale");
     await buildProject(root);
-    const first = await readFile(join(root, "dist/sans-emoji-chrome.zip"));
+    expect((await readdir(join(root, "dist"))).sort()).toEqual([
+      "chrome",
+      "firefox",
+    ]);
     for (const browser of ["chrome", "firefox"]) {
-      const archive = unzipSync(
-        await readFile(join(root, `dist/sans-emoji-${browser}.zip`)),
-      );
-      expect(Object.keys(archive).sort()).toEqual([
+      const directory = join(root, "dist", browser);
+      expect((await readdir(directory)).sort()).toEqual([
         "content.js",
-        "icons/icon16.png",
+        "icons",
         "manifest.json",
       ]);
-      const content = archive["content.js"];
-      const manifestBytes = archive["manifest.json"];
-      if (!content || !manifestBytes) throw new Error("Missing package files");
-      expect(strFromU8(content)).toContain("compiled");
-      expect(strFromU8(content)).not.toContain(": string");
-      expect(JSON.parse(strFromU8(manifestBytes))).toMatchObject({
-        version: "2026.10.0",
-      });
-      expect(archive["icons/icon16.png"]).toEqual(new Uint8Array([1, 2, 3]));
+      const content = await readFile(join(directory, "content.js"), "utf8");
+      expect(content).toContain("compiled");
+      expect(content).not.toContain(": string");
+      expect(
+        JSON.parse(await readFile(join(directory, "manifest.json"), "utf8")),
+      ).toEqual(browserManifest(manifest, browser as "chrome" | "firefox"));
+      expect(await readFile(join(directory, "icons/icon16.png"))).toEqual(
+        Buffer.from([1, 2, 3]),
+      );
     }
+    const first = await readFile(join(root, "dist/chrome/content.js"));
     await buildProject(root);
-    expect(await readFile(join(root, "dist/sans-emoji-chrome.zip"))).toEqual(
-      first,
-    );
-    await expect(
-      readFile(join(root, "dist/chrome/stale.js")),
-    ).rejects.toThrow();
+    expect(await readFile(join(root, "dist/chrome/content.js"))).toEqual(first);
     const otherRoot = await fixture();
     await buildProject(otherRoot);
-    expect(
-      await readFile(join(otherRoot, "dist/sans-emoji-chrome.zip")),
-    ).toEqual(first);
+    expect(await readFile(join(otherRoot, "dist/chrome/content.js"))).toEqual(
+      first,
+    );
   });
   it("refuses mismatched package and extension versions", async () => {
     const root = await fixture();
     await writeFile(
       join(root, "package.json"),
-      JSON.stringify({ version: "2026.11.0" }),
+      JSON.stringify({ version: "2026.11.1" }),
     );
     await expect(buildProject(root)).rejects.toThrow("versions must match");
   });
