@@ -3,10 +3,12 @@ import { fileURLToPath } from "node:url";
 import { expect, it, vi } from "vitest";
 import { buildProject } from "../../tooling/build.ts";
 import { generateIcons } from "../../tooling/icons.ts";
+import { lintExtension } from "../../tooling/lint-extension.ts";
 import { packageProject } from "../../tooling/package.ts";
 
 vi.mock("../../tooling/build.ts", () => ({ buildProject: vi.fn() }));
 vi.mock("../../tooling/icons.ts", () => ({ generateIcons: vi.fn() }));
+vi.mock("../../tooling/lint-extension.ts", () => ({ lintExtension: vi.fn() }));
 vi.mock("../../tooling/package.ts", () => ({ packageProject: vi.fn() }));
 const root = fileURLToPath(new URL("../../", import.meta.url));
 it("build CLI resolves the project root independently of cwd", async () => {
@@ -20,4 +22,8 @@ it("icon CLI resolves the project root independently of cwd", async () => {
 it("package CLI resolves the project root independently of cwd", async () => {
   await import("../../scripts/package.ts");
   expect(packageProject).toHaveBeenCalledWith(root);
+});
+it("extension lint CLI resolves the project root independently of cwd", async () => {
+  await import("../../scripts/lint-extension.ts");
+  expect(lintExtension).toHaveBeenCalledWith(root);
 });

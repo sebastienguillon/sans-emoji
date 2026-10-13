@@ -44,7 +44,7 @@ After changing the source, run `pnpm build`, reload Sans Emoji in the browser's 
 
 If you previously loaded `dist/chrome` or `dist/firefox/manifest.json`, remove that development installation and load the shared path above once.
 
-**Build output is disposable:** `pnpm build` clears and recreates `dist/`, including any previously generated ZIPs. Run `pnpm package` when you need fresh archives.
+**Build output is disposable:** `pnpm build` and `pnpm check` clear and recreate `dist/`, including any previously generated ZIPs. Run `pnpm package` when you need fresh archives.
 
 ## Behavior and scope
 
@@ -82,7 +82,7 @@ These selectors are internal Atlaskit conventions, not a stable API. They were i
 | Firefox no longer has the extension after a restart | Load `dist/manifest.json` again. Temporary installations do not persist across restarts. |
 | The browser cannot find the extension files | Run `pnpm build` from the repository root, then load the shared `dist/` path. Replace installations pointing to an old browser subfolder. |
 | A build reports that versions must match | Set the same calendar version in `package.json` and `extension/manifest.json`. |
-| Distribution ZIPs disappeared | `pnpm build` and `pnpm test:browser` recreate `dist/`. Run `pnpm package` to regenerate the two archives. |
+| Distribution ZIPs disappeared | `pnpm build`, `pnpm check`, and `pnpm test:browser` recreate `dist/`. Run `pnpm package` to regenerate the two archives. |
 
 When reporting an editor problem, include the browser version, editor type, domain, and a short reproduction using non-sensitive text.
 
@@ -92,19 +92,36 @@ Use pnpm consistently and keep `pnpm-lock.yaml`. All executable project code is 
 
 | Command | Purpose |
 | --- | --- |
-| `pnpm typecheck` | Check runtime code, tooling, scripts, tests, and configuration |
+| `pnpm typecheck` | Check browser source, Node tooling/configuration, and test fixtures in separate TypeScript environments |
 | `pnpm lint` | Check formatting and lint rules with Biome |
+| `pnpm lint:ext` | Validate the existing `dist/` with Mozilla's add-on linter; fail errors and applicable warnings |
 | `pnpm format` | Apply formatting and safe lint fixes |
 | `pnpm test` | Run unit tests |
 | `pnpm test:watch` | Watch unit tests |
 | `pnpm test:coverage` | Run unit tests and enforce per-file coverage thresholds |
-| `pnpm check` | Run typechecking, linting, and unit coverage checks |
+| `pnpm check` | Run typechecking, linting, unit coverage, a clean build, and extension validation |
 | `pnpm build` | Typecheck and recreate the shared unpacked `dist/` build |
 | `pnpm test:browser` | Rebuild and run Chromium/Firefox regression tests |
-| `pnpm package` | Run `pnpm check`, rebuild, and create extension and source ZIPs |
+| `pnpm package` | Run `pnpm check`, then reproduce the build and create extension and source ZIPs |
 | `pnpm icons` | Regenerate committed PNG icons; requires Inkscape on `PATH` |
 
-`pnpm build` does not run lint or tests. `pnpm package` runs unit checks but does not run browser tests. The workspace allows esbuild's dependency build script through `allowBuilds`; normal builds need neither Inkscape nor a system `zip` executable.
+`pnpm build` does not run lint or tests. `pnpm check` now recreates `dist/`, removing existing ZIPs, and validates the resulting extension. `pnpm package` performs those checks before creating both archives, but does not run browser tests. The workspace allows esbuild's dependency build script through `allowBuilds`; normal builds need neither Inkscape nor a system `zip` executable.
+
+`pnpm lint:ext` uses pinned `web-ext` with personal configuration discovery disabled. It checks the existing build and does not rebuild or change its files; ZIPs in `dist/` are ignored by web-ext's default file rules. Run `pnpm build` first when the output is missing or stale. Mozilla's [linter](https://extensionworkshop.com/documentation/develop/web-ext-command-reference/#web-ext-lint) checks manifest and extension compatibility, but is not store approval or a substitute for browser tests.
+
+One diagnostic is explicitly reported as inapplicable: `KEY_FIREFOX_ANDROID_UNSUPPORTED_BY_MIN_VERSION` in `manifest.json`, only while the manifest has no `gecko_android` entry. Mozilla [requires that entry to enable Android distribution](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/browser_specific_settings#firefox_gecko_properties), but the linter checks Android minimums even for this desktop-only extension. All errors and other warnings fail validation. Adding Android support makes that warning fatal too; do not widen this exception to hide compatibility problems.
+
+### TypeScript environments
+
+Shared strictness rules live in `tsconfig.base.json`. `pnpm typecheck` runs all three environments:
+
+| Configuration | Files and available APIs |
+| --- | --- |
+| `tsconfig.json` | `src/`: ECMAScript and browser DOM, without Node globals or ambient Node module types |
+| `tsconfig.node.json` | `tooling/`, `scripts/`, and root test-runner configs: ECMAScript and Node, without DOM globals |
+| `tests/tsconfig.json` | Unit tests, Playwright tests, and fixtures: Node and DOM, because the harness exercises both |
+
+Tests may import browser code, but the separate browser check still rejects accidental uses of `process`, `Buffer`, or Node built-ins in `src/`. The Node check rejects accidental DOM access in build tooling. Every project TypeScript file remains covered by a typecheck; this split does not change runtime bundling or unit coverage requirements.
 
 ### Project layout
 
@@ -113,13 +130,15 @@ Use pnpm consistently and keep `pnpm-lock.yaml`. All executable project code is 
 | `src/` | Content-script entry point, DOM checks, cancellation, and controller |
 | `extension/` | Shared manifest, popup suppression CSS, and committed PNG icons |
 | `docs/` | Static public overview, privacy policy, and support website |
-| `tooling/` | Bundling, ZIP packaging, and icon generation |
+| `store/` | English/French listing copy, submission reference, and image guidance |
+| `tooling/` | Bundling, ZIP packaging, extension validation, and icon generation |
 | `scripts/` | TypeScript command entry points, run directly by Node.js |
 | `tests/unit/` | Runtime and tooling unit tests |
 | `tests/e2e/` | Playwright browser fixtures and regression tests |
 | `assets/icon.svg` | Editable icon source |
 | `dist/` | Generated extension files and, after packaging, two ZIPs |
 | `release-notes/` | Versioned notes and pending changes |
+| `tsconfig*.json` | Shared strictness, browser source, and Node tooling configurations |
 | `AGENTS.md` | Project conventions and release requirements |
 
 esbuild targets Chrome 120 and Firefox 140 and produces one standalone content script. The build copies the shared manifest unchanged, including Firefox's extension ID, minimum version, and no-data declaration. Chrome [ignores `browser_specific_settings`](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/browser_specific_settings).
@@ -136,13 +155,15 @@ On Linux, Playwright may also need system libraries; CI installs them with `pnpm
 
 Every TypeScript file in `src/`, `tooling/`, and `scripts/` must reach **100% statements, branches, functions, and lines**, per file. There are no coverage-ignore directives or production-code exclusions. Fixtures, declarative configuration, generated bundles, and dependencies are outside that denominator. Reports are written to `coverage/index.html`, `coverage/lcov.info`, and `coverage/coverage-summary.json`.
 
-Unit tests cover domain boundaries, caret checks, French spacing, focus, IME handling, retries, and cleanup. Build and packaging tests use temporary projects, reject missing inputs and symlinks in source archives, check stale-output cleanup, and rebuild extracted sources to reproduce both ZIPs byte for byte. jsdom fixtures supply layout and `isContentEditable`, which jsdom does not implement.
+Unit tests cover domain boundaries, caret checks, French spacing, focus, IME handling, retries, and cleanup. Extension-validation tests enforce warning/error failures, the narrowly scoped Android exception, and process/file failure handling. Build and packaging tests use temporary projects, reject missing inputs and symlinks in source archives, check stale-output cleanup, and rebuild extracted sources to reproduce both ZIPs byte for byte. They verify that store materials and every TypeScript configuration are included in review sources, while store and website files stay out of the installed extension. jsdom fixtures supply layout and `isContentEditable`, which jsdom does not implement.
 
 Chromium tests load the actual unpacked extension. Firefox tests inject the compiled script and stylesheet; they do not test Firefox add-on installation or signing. Both use local HTML fixtures with intercepted requests and never access an Atlassian account. They check typing, Enter/Tab, mentions, slash commands, toolbar pickers, domain scope, frames, IME handling, and popup visibility at mount and on animation frames. Playwright writes its report to `playwright-report/` and retains traces for failed tests.
 
 Before a release, also check `Bonjour : suite`, both non-breaking-space variants, Enter/Tab, undo/redo, mentions, slash commands, and the toolbar emoji picker in a signed-in editor. Record the browser and editor tested; no issue submission is needed.
 
-[GitHub Actions](.github/workflows/ci.yml) runs packaging checks and browser tests on pushes and pull requests, then attempts to upload coverage, browser reports, and `dist/` even if a preceding step fails.
+[GitHub Actions](.github/workflows/ci.yml) runs packaging checks, including extension validation, and browser tests on pushes and pull requests, then attempts to upload coverage, browser reports, and `dist/` even if a preceding step fails. It uses Ubuntu 24.04, a 20-minute job timeout, read-only repository permissions, and checkout with persisted credentials disabled. A newer run cancels an older run for the same workflow and Git ref.
+
+Actions are pinned to full commit SHAs resolved from their official repositories, with the corresponding major version in a comment. Update both when upgrading; verify annotated tags against their underlying commit. pnpm remains pinned by `packageManager` in `package.json`, Node follows `.node-version`, and dependency installation uses the frozen lockfile. `actionlint .github/workflows/ci.yml` can validate workflow edits locally when actionlint is installed.
 
 ## Packaging and releases
 
@@ -164,7 +185,7 @@ For a release:
    ```
 
 4. Complete the manual editor checks above. If you update release notes or other source files after packaging, run `pnpm package` again so the review source ZIP matches the final files.
-5. Include the versioned release notes with the upload or release handoff. Clear the changes incorporated from the unreleased notes and regenerate packages if those notes changed.
+5. Prepare the listing copy and submission fields from [store/](store/README.md), verify the public links, and capture release screenshots as described there. Include the versioned release notes with the upload or release handoff. Clear the changes incorporated from the unreleased notes and regenerate packages if those notes changed.
 
 The direct `pnpm exec playwright test` command uses the existing build and preserves its ZIPs. The `pnpm test:browser` shortcut rebuilds first and removes them.
 
@@ -175,7 +196,7 @@ Packaging leaves the unpacked build in `dist/` and creates exactly two archives:
 | `dist/sans-emoji.zip` | The same extension ZIP for Chrome Web Store or Mozilla Add-ons submission |
 | `dist/sans-emoji-sources.zip` | Matching sources to attach separately for Firefox review |
 
-The extension ZIP contains only the manifest, bundled script, stylesheet, icons, and license. The source ZIP includes current local files, including uncommitted edits: source, tooling, tests, configuration, lockfile, committed assets, documentation, and release notes. Its [allowlist](tooling/package.ts) excludes dependencies, Git metadata, and generated output. Keep that list current when adding build inputs.
+The extension ZIP contains only the manifest, bundled script, stylesheet, icons, and license. The source ZIP includes current local files, including uncommitted edits: source, tooling, tests, all TypeScript configurations, lockfile, committed assets, documentation, store materials, and release notes. Its [allowlist](tooling/package.ts) excludes dependencies, Git metadata, and generated output. Keep that list current when adding build inputs. Both ZIPs continue to come from the same working files; source packaging does not use `git archive HEAD`.
 
 Packaging needs no Git checkout. Fixed ZIP timestamps and sorted paths make archives reproducible for identical inputs. The extension ZIP is unsigned; this command does not publish it or request Mozilla signing. Renaming it to `.xpi` does not sign it.
 
@@ -191,6 +212,8 @@ pnpm build
 The resulting `dist/` files reproduce `sans-emoji.zip`. This build needs no browser installation, Inkscape, Git metadata, system `zip`, or global TypeScript. Use `pnpm package` to recreate both ZIPs instead. See [Mozilla's source submission requirements](https://extensionworkshop.com/documentation/publish/source-code-submission/).
 
 ## Public website and store URLs
+
+[Store materials](store/README.md) keep dashboard copy and image guidance separate from the public website. [Release notes](release-notes/) remain the authoritative release history; the English and French listing files do not duplicate it.
 
 The `docs/` folder contains a static overview, privacy policy, and support page, matching SG-X's cream-and-olive visual style. It uses a shared stylesheet and the extension's icon, with no JavaScript, third-party fonts, analytics, or site build step. The pages use the same developer contact as SG-X: `guillon.sebastien@gmail.com`.
 

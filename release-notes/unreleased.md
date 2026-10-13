@@ -10,8 +10,21 @@ Changes after the initial [2026.10.10 notes](2026.10.10.md). No new release vers
 - Include the MIT license in the unpacked build and both archives.
 - Clarify installation, troubleshooting, test coverage, release preparation, and source reproduction in the README.
 - Prepare a static overview, privacy policy, and support website in `docs/`, using SG-X's visual style, plus a source-level privacy document. Include them in Firefox review sources and document the intended GitHub Pages/store URLs; deployment remains a separate step.
+- Add English and French store listing copy, submission notes, and image guidance in `store/`, keeping the authoritative release history in `release-notes/`.
+- Validate the built extension with pinned Mozilla tooling as part of `pnpm check` and `pnpm package`. Fail errors and applicable warnings; explicitly report the Android minimum-version diagnostic as inapplicable only while the manifest remains desktop-only.
+- Separate browser, Node tooling, and test TypeScript environments while preserving strictness, unit coverage, and reproducible source packaging.
+- Pin CI actions to verified commits, disable persisted checkout credentials, bound job duration, and cancel superseded runs while keeping browser tests and report uploads.
 
 ## Validation
+
+Recorded locally on October 13, 2026 for the project-organization changes:
+
+- `pnpm package`: all three TypeScript environments, Biome, and 74 unit tests passed with 100% statement, branch, function, and line coverage across all 11 files in `src/`, `tooling/`, and `scripts/`. Packaging tests reproduced both archives byte for byte and checked the new source inputs.
+- Extension validation reported zero errors and zero actionable warnings. One Android minimum-version warning was explicitly skipped because the manifest does not enable Android distribution; enabling Android in a temporary built manifest correctly made it fail. Removing a required manifest field also failed validation. The built manifest was restored afterward.
+- `pnpm exec playwright test`: all 42 Chromium/Firefox fixtures passed against the shared packaged build. These checks use the same browser-loading limits described below.
+- Temporary negative type checks proved that browser source rejects Node globals and imports, and Node tooling rejects DOM globals. Probe files were removed after the checks.
+- `actionlint .github/workflows/ci.yml` passed. Action commit pins were resolved against their official repositories. Hosted GitHub Actions has not been run for these uncommitted changes.
+- Checked 30 local README/store links, English name and summary against the manifest, and both listing summaries against the 132-character limit. No store submission, website deployment, release screenshot capture, or live Atlassian editor test was performed for these changes.
 
 Recorded locally on October 11, 2026:
 

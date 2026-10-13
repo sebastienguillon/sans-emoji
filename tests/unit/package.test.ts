@@ -71,14 +71,19 @@ it("creates only a shared extension ZIP and reproducible Firefox review sources"
       "src/content.ts",
       "tooling/build.ts",
       "tooling/package.ts",
+      "tooling/lint-extension.ts",
       "scripts/build.ts",
       "scripts/package.ts",
+      "scripts/lint-extension.ts",
       "extension/manifest.json",
       "extension/content.css",
       "extension/icons/icon16.png",
       "pnpm-lock.yaml",
       "pnpm-workspace.yaml",
       "tsconfig.json",
+      "tsconfig.base.json",
+      "tsconfig.node.json",
+      "tests/tsconfig.json",
       "package.json",
       "README.md",
       "PRIVACY.md",
@@ -87,6 +92,10 @@ it("creates only a shared extension ZIP and reproducible Firefox review sources"
       "docs/support.html",
       "docs/styles.css",
       "docs/icon.png",
+      "store/README.md",
+      "store/listing.en.md",
+      "store/listing.fr.md",
+      "store/submission.md",
       "LICENSE",
       "AGENTS.md",
       "tests/unit/package.test.ts",
@@ -118,9 +127,9 @@ it("creates only a shared extension ZIP and reproducible Firefox review sources"
   expect(Object.keys(archive)).toContain("icons/icon16.png");
   expect(Object.keys(archive)).not.toContain("stale.js");
   expect(Object.keys(archive)).not.toContain("PRIVACY.md");
-  expect(Object.keys(archive).some((path) => path.startsWith("docs/"))).toBe(
-    false,
-  );
+  expect(
+    Object.keys(archive).some((path) => /^(docs|store)\//.test(path)),
+  ).toBe(false);
   expect(
     Object.keys(archive).some(
       (path) => /^(chrome|firefox)\//.test(path) || path.endsWith(".zip"),
