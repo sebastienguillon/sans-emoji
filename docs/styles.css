@@ -182,6 +182,19 @@ footer p:last-child {
 .hero .lead {
   max-width: 610px;
 }
+.compatibility,
+.installation-note {
+  max-width: 610px;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.6;
+}
+.compatibility {
+  margin-bottom: 0;
+}
+.installation-note {
+  margin: 16px 0 0;
+}
 .actions {
   display: flex;
   align-items: center;
@@ -220,6 +233,9 @@ footer p:last-child {
 }
 .section > :last-child {
   margin-bottom: 0;
+}
+.section > p {
+  max-width: var(--reading-width);
 }
 .features {
   display: grid;
@@ -338,7 +354,7 @@ footer p:last-child {
   margin-top: 24px;
 }
 .contact {
-  margin-block: 32px 44px;
+  margin-block: 32px 0;
   padding: 24px 28px;
   background: var(--tint);
   border-radius: 12px;
@@ -349,6 +365,9 @@ footer p:last-child {
 }
 .contact p {
   margin: 0;
+}
+.troubleshooting {
+  margin-top: 40px;
 }
 .troubleshooting > h2 {
   margin-top: 0;
@@ -493,7 +512,6 @@ footer .wrap {
   }
   .contact {
     padding: 22px;
-    margin-bottom: 36px;
   }
   .contact h2 {
     font-size: 20px;

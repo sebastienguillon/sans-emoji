@@ -7,7 +7,7 @@
     <meta name="description" content="Keep typing on Atlassian sites without colon-triggered emoji suggestions. One small extension for Chrome and Firefox." />
     <link rel="canonical" href="https://sebastienguillon.github.io/sans-emoji/" />
     <link rel="icon" type="image/png" href="icon.png" />
-    <link rel="stylesheet" href="styles.css?v=20261011" />
+    <link rel="stylesheet" href="styles.css?v=20261013" />
     <meta name="theme-color" content="#20231d" />
   </head>
   <body>
@@ -23,10 +23,12 @@
         <div>
           <h1>Keep your punctuation.<br />Skip the suggestions.</h1>
           <p class="lead">A colon should let you finish your sentence. Sans Emoji hides emoji suggestions on Atlassian sites, so you can keep writing.</p>
+          <p class="compatibility">For HTTPS pages on <strong>atlassian.net</strong>, <strong>atlassian.com</strong> and <strong>bitbucket.org</strong>, including subdomains. Custom company domains are not supported.</p>
           <div class="actions">
-            <a class="button" href="https://github.com/sebastienguillon/sans-emoji#install-locally">Installation instructions</a>
-            <span class="status">For Chrome and Firefox</span>
+            <a class="button" href="https://github.com/sebastienguillon/sans-emoji#install-locally" aria-describedby="installation-note">Install locally</a>
+            <span class="status">Desktop Chrome and Firefox</span>
           </div>
+          <p id="installation-note" class="installation-note">Manual installation: build from source with Node.js 24+ and pnpm 12+, then load the extension in your browser. Firefox removes temporary installations when it restarts.</p>
         </div>
         <img src="icon.png" width="180" height="180" alt="Sans Emoji extension icon" />
       </section>
@@ -35,11 +37,11 @@
         <div class="features">
           <article>
             <h3>Your sentence, uninterrupted.</h3>
-            <p>Write “Bonjour : voici les détails” with ordinary or non-breaking French spaces. Sans Emoji asks the editor to cancel autocomplete without rewriting your text.</p>
+            <p>Write “Bonjour : voici les détails” with ordinary or non-breaking French spaces. Your text stays as you wrote it.</p>
           </article>
           <article>
             <h3>No suggestion-panel flash.</h3>
-            <p>Recognized emoji panels stay hidden from their first frame, even while the editor takes a moment to cancel them or you are composing text with an input method.</p>
+            <p>The emoji suggestions Sans Emoji recognizes stay hidden while you type, even when the editor takes a moment to dismiss them.</p>
           </article>
           <article>
             <h3>Emoji when you choose.</h3>
@@ -52,8 +54,8 @@
         </div>
       </section>
       <section class="section">
-        <h2>One small job. No setup.</h2>
-        <p class="lead">Once installed, Sans Emoji works automatically on supported pages. There are no settings to configure and no toolbar popup to open.</p>
+        <h2>No settings to configure.</h2>
+        <p class="lead">Once installed, Sans Emoji works automatically on supported pages. There is no toolbar popup to open.</p>
         <p>To turn it off, disable it in your browser’s extension manager and refresh the page. Atlassian editors can change; if suggestions still appear or a key behaves unexpectedly, start with the <a href="support.html">troubleshooting guide</a>.</p>
       </section>
       <section class="privacy-note" aria-labelledby="privacy-heading">

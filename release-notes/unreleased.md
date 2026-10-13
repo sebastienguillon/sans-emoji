@@ -10,12 +10,20 @@ Changes after the initial [2026.10.10 notes](2026.10.10.md). No new release vers
 - Include the MIT license in the unpacked build and both archives.
 - Clarify installation, troubleshooting, test coverage, release preparation, and source reproduction in the README.
 - Prepare a static overview, privacy policy, and support website in `docs/`, using SG-X's visual style, plus a source-level privacy document. Include them in Firefox review sources and document the intended GitHub Pages/store URLs; deployment remains a separate step.
+- Clarify the website's local-installation action with build requirements, Firefox's temporary-installation lifecycle, and supported domains beside it. Put troubleshooting and reporting guidance before contact details, simplify overview copy, and constrain long paragraphs while preserving the existing visual style.
 - Add English and French store listing copy, submission notes, and image guidance in `store/`, keeping the authoritative release history in `release-notes/`.
 - Validate the built extension with pinned Mozilla tooling as part of `pnpm check` and `pnpm package`. Fail errors and applicable warnings; explicitly report the Android minimum-version diagnostic as inapplicable only while the manifest remains desktop-only.
 - Separate browser, Node tooling, and test TypeScript environments while preserving strictness, unit coverage, and reproducible source packaging.
 - Pin CI actions to verified commits, disable persisted checkout credentials, bound job duration, and cancel superseded runs while keeping browser tests and report uploads.
 
 ## Validation
+
+Recorded locally on October 13, 2026 for the documentation refinements:
+
+- `pnpm package` passed typechecking, linting, all 74 unit tests with 100% coverage, reproducible packaging tests, and extension validation. `pnpm exec playwright test` passed all 42 Chromium/Firefox fixtures with the browser-loading limits described below.
+- Visually inspected overview, privacy, and support in Chrome at 1280 × 900 and 390 × 844, plus the overview at 320 px and 768 px widths. No horizontal overflow was observed; the cream-and-olive style, nearby installation qualifications, support reading order, and 720 px desktop paragraph measure were verified.
+- Verified keyboard access to the skip link and troubleshooting disclosure, visible focus, both support-page jump links, and no browser console errors or warnings. Static checks resolved all 46 local links/assets and six ARIA ID references without duplicate IDs.
+- One post-edit design scan returned the same four non-actionable warnings: three for the intentionally preserved cream palette and one known section-padding false positive. No new actionable findings were identified. These checks do not establish website deployment or live Atlassian-editor behavior.
 
 Recorded locally on October 13, 2026 for the project-organization changes:
 
