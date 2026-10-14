@@ -78,23 +78,38 @@ for (const host of [
   }
 }
 for (const trigger of ["@", "/"]) {
-  test(`keeps ${trigger} autocomplete and manual emoji picker`, async ({
-    page,
-  }) => {
-    await page.goto("https://test.atlassian.net/fixture");
-    await page.evaluate(mountEditor, { space: " ", trigger, legacy: false });
-    await page.keyboard.press(trigger);
-    // Observe longer than the controller retry window before asserting non-interference.
-    await page.waitForTimeout(200);
-    await expect(page.locator("[data-query-prefix]")).toBeVisible();
-    await expect(page.locator("#suggestions")).toBeVisible();
-    await expect(page.locator("#status")).toHaveAttribute(
-      "data-visible-at-mount",
-      "true",
-    );
-    await page.locator("#picker").click();
-    await expect(page.locator(".ak-emoji-picker")).toBeVisible();
-  });
+  for (const overflow of ["document", "container"] as const) {
+    test(`keeps ${trigger} autocomplete geometry in ${overflow} and manual emoji picker`, async ({
+      page,
+    }) => {
+      await page.goto("https://test.atlassian.net/fixture");
+      await page.evaluate(mountEditor, {
+        space: " ",
+        trigger,
+        legacy: false,
+        overflow,
+      });
+      await page.keyboard.press(trigger);
+      // Observe longer than the controller retry window before asserting non-interference.
+      await page.waitForTimeout(200);
+      await expect(page.locator("[data-query-prefix]")).toBeVisible();
+      await expect(page.locator("#suggestions")).toBeVisible();
+      await expect(page.locator("#status")).toHaveAttribute(
+        "data-visible-at-mount",
+        "true",
+      );
+      await expect(page.locator("#status")).toHaveAttribute(
+        "data-scroll-changed-at-mount",
+        "true",
+      );
+      await expect(page.locator("#status")).toHaveAttribute(
+        "data-scroll-changed-frame",
+        "true",
+      );
+      await page.locator("#picker").click();
+      await expect(page.locator(".ak-emoji-picker")).toBeVisible();
+    });
+  }
 }
 for (const host of [
   "example.org",
@@ -164,36 +179,49 @@ test("works in matching embedded frames", async ({ page }) => {
 });
 
 for (const legacy of [false, true]) {
-  test(`never paints suggestions while cancellation is unavailable (legacy: ${legacy})`, async ({
-    page,
-  }) => {
-    await page.goto("https://test.atlassian.net/fixture");
-    await page.evaluate(mountEditor, {
-      space: " ",
-      trigger: ":",
-      legacy,
-      ignoreEscape: true,
+  for (const overflow of ["document", "container"] as const) {
+    test(`never paints or changes ${overflow} scrolling while cancellation is unavailable (legacy: ${legacy})`, async ({
+      page,
+    }) => {
+      await page.goto(
+        `https://${legacy ? "bitbucket.org" : "test.atlassian.net"}/fixture`,
+      );
+      await page.evaluate(mountEditor, {
+        space: " ",
+        trigger: ":",
+        legacy,
+        ignoreEscape: true,
+        overflow,
+      });
+      await page.keyboard.press(":");
+      // Sample frames beyond all four retries, including unsupported handlers.
+      await page.waitForTimeout(250);
+      await expect(page.locator("#suggestions")).toBeAttached();
+      await expect(page.locator("#suggestions")).toBeHidden();
+      await expect(page.locator("#status")).toHaveAttribute(
+        "data-visible-at-mount",
+        "false",
+      );
+      await expect(page.locator("#status")).not.toHaveAttribute(
+        "data-visible-frame",
+        "true",
+      );
+      await expect(page.locator("#status")).toHaveAttribute(
+        "data-scroll-changed-at-mount",
+        "false",
+      );
+      await expect(page.locator("#status")).not.toHaveAttribute(
+        "data-scroll-changed-frame",
+        "true",
+      );
+      // Legacy dismissal still needs a client rect to recognize a mounted popup.
+      expect(
+        await page
+          .locator("#suggestions")
+          .evaluate((menu) => menu.getClientRects().length),
+      ).toBeGreaterThan(0);
     });
-    await page.keyboard.press(":");
-    // Sample frames beyond all four retries, including unsupported handlers.
-    await page.waitForTimeout(250);
-    await expect(page.locator("#suggestions")).toBeAttached();
-    await expect(page.locator("#suggestions")).toBeHidden();
-    await expect(page.locator("#status")).toHaveAttribute(
-      "data-visible-at-mount",
-      "false",
-    );
-    await expect(page.locator("#status")).not.toHaveAttribute(
-      "data-visible-frame",
-      "true",
-    );
-    // Hiding must preserve geometry or legacy dismissal will skip the popup.
-    expect(
-      await page
-        .locator("#suggestions")
-        .evaluate((menu) => menu.getClientRects().length),
-    ).toBeGreaterThan(0);
-  });
+  }
 
   test(`hides suggestions until a delayed Escape handler cancels them (legacy: ${legacy})`, async ({
     page,
@@ -216,5 +244,80 @@ for (const legacy of [false, true]) {
       "true",
     );
     await expect(page.locator("#editor")).toBeFocused();
+  });
+}
+
+for (const overflow of ["document", "container"] as const) {
+  test(`hides an emoji portal mounted after query removal without changing ${overflow} scrolling`, async ({
+    page,
+  }) => {
+    await page.goto("https://test.atlassian.net/fixture");
+    await page.evaluate(mountEditor, {
+      space: " ",
+      trigger: ":",
+      legacy: false,
+      popupAfterQueryRemoval: true,
+      overflow,
+    });
+    await page.keyboard.press(":");
+    await expect(page.locator("#suggestions")).toBeAttached();
+    await page.waitForTimeout(100);
+    await expect(page.locator("[data-query-prefix]")).toHaveCount(0);
+    await expect(page.locator("#suggestions")).toBeHidden();
+    await expect(page.locator("#status")).toHaveAttribute(
+      "data-visible-at-mount",
+      "false",
+    );
+    await expect(page.locator("#status")).toHaveAttribute(
+      "data-scroll-changed-at-mount",
+      "false",
+    );
+    await expect(page.locator("#status")).not.toHaveAttribute(
+      "data-visible-frame",
+      "true",
+    );
+    await expect(page.locator("#status")).not.toHaveAttribute(
+      "data-scroll-changed-frame",
+      "true",
+    );
+    await expect(page.locator("#editor")).toBeFocused();
+    await expect(page.locator("#editor")).toHaveText("Bonjour :");
+  });
+
+  test(`keeps delayed emoji portal removal from changing ${overflow} scrolling after query cancellation`, async ({
+    page,
+  }) => {
+    await page.goto("https://test.atlassian.net/fixture");
+    await page.evaluate(mountEditor, {
+      space: " ",
+      trigger: ":",
+      legacy: false,
+      popupRemovalDelay: 80,
+      overflow,
+    });
+    await page.keyboard.press(":");
+    await expect(page.locator("[data-query-prefix]")).toHaveCount(0);
+    await expect(page.locator("#suggestions")).toHaveCount(0);
+    for (const stage of ["mount", "query-removal"]) {
+      await expect(page.locator("#status")).toHaveAttribute(
+        `data-visible-at-${stage}`,
+        "false",
+      );
+      await expect(page.locator("#status")).toHaveAttribute(
+        `data-scroll-changed-at-${stage}`,
+        "false",
+      );
+    }
+    await expect(page.locator("#status")).not.toHaveAttribute(
+      "data-visible-frame",
+      "true",
+    );
+    await expect(page.locator("#status")).not.toHaveAttribute(
+      "data-scroll-changed-frame",
+      "true",
+    );
+    await expect(page.locator("#editor")).toBeFocused();
+    await page.keyboard.type(" suite");
+    await expect(page.locator("#editor")).toHaveText("Bonjour : suite");
   });
 }

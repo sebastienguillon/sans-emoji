@@ -5,7 +5,10 @@ export function mountEditor(options: {
   trigger: string;
   legacy: boolean;
   handlerDelay?: number;
+  popupRemovalDelay?: number;
+  popupAfterQueryRemoval?: boolean;
   ignoreEscape?: boolean;
+  overflow?: "document" | "container";
 }): void {
   document.body.innerHTML =
     '<button id="picker" type="button">Emoji picker</button><div id="status"></div>';
@@ -41,30 +44,92 @@ export function mountEditor(options: {
       selection?.addRange(range);
     }
   };
-  const mountMenu = (className: string): HTMLElement => {
+  const mountMenu = (
+    className: string,
+  ): { menu: HTMLElement; recordQueryRemoval: () => void } => {
+    let menuHost: HTMLElement = document.body;
+    if (options.overflow === "container") {
+      menuHost = document.createElement("div");
+      menuHost.style.cssText =
+        "position: relative; width: 320px; height: 100px; overflow: auto; border: 1px solid black";
+      document.body.append(menuHost);
+    }
+    const scrollDimensions = (): string =>
+      JSON.stringify([
+        document.documentElement.scrollWidth,
+        document.documentElement.scrollHeight,
+        ...(options.overflow === "container"
+          ? [menuHost.scrollWidth, menuHost.scrollHeight]
+          : []),
+      ]);
+    const initialScrollDimensions = scrollDimensions();
     const menu = document.createElement("div");
     menu.id = "suggestions";
     menu.className = className;
     menu.style.cssText =
       "opacity: 1; visibility: visible; pointer-events: auto";
+    if (options.overflow) {
+      const top =
+        options.overflow === "document" ? "calc(100vh - 20px)" : "80px";
+      const left =
+        options.overflow === "document" ? "calc(100vw - 20px)" : "300px";
+      menu.style.cssText += `; position: absolute; top: ${top}; left: ${left}; width: 360px; height: 400px; padding: 16px; border: 1px solid black`;
+    }
     menu.textContent = "Suggestions";
-    document.body.append(menu);
-    // Record visibility synchronously, before any observer/timer can dismiss it.
-    const style = getComputedStyle(menu);
+    if (options.overflow) {
+      const content = document.createElement("div");
+      content.style.cssText = "min-width: 360px; height: 400px";
+      content.textContent = "Suggestions";
+      menu.replaceChildren(content);
+    }
+    if (
+      !options.legacy &&
+      options.trigger === ":" &&
+      (options.popupRemovalDelay || options.popupAfterQueryRemoval)
+    ) {
+      // Observed in Jira's portaled emoji menu, including after its query is gone.
+      const item = document.createElement("div");
+      item.className = "ak-emoji-typeahead-item";
+      item.setAttribute("data-emoji-id", ":grinning:");
+      item.setAttribute("role", "button");
+      item.textContent = "😀";
+      menu.append(item);
+    }
+    menuHost.append(menu);
     const status = document.querySelector("#status");
-    status?.setAttribute(
-      "data-visible-at-mount",
-      String(style.visibility !== "hidden" && style.opacity !== "0"),
-    );
+    const recordState = (stage: "mount" | "query-removal"): void => {
+      const style = getComputedStyle(menu);
+      status?.setAttribute(
+        `data-visible-at-${stage}`,
+        String(
+          style.display !== "none" &&
+            style.visibility !== "hidden" &&
+            style.opacity !== "0",
+        ),
+      );
+      if (options.overflow)
+        status?.setAttribute(
+          `data-scroll-changed-at-${stage}`,
+          String(scrollDimensions() !== initialScrollDimensions),
+        );
+    };
+    // Record visibility synchronously, before any observer/timer can dismiss it.
+    recordState("mount");
     const sampleFrame = (): void => {
       if (!menu.isConnected) return;
       const frameStyle = getComputedStyle(menu);
-      if (frameStyle.visibility !== "hidden" && frameStyle.opacity !== "0")
+      if (
+        frameStyle.display !== "none" &&
+        frameStyle.visibility !== "hidden" &&
+        frameStyle.opacity !== "0"
+      )
         status?.setAttribute("data-visible-frame", "true");
+      if (options.overflow && scrollDimensions() !== initialScrollDimensions)
+        status?.setAttribute("data-scroll-changed-frame", "true");
       requestAnimationFrame(sampleFrame);
     };
     requestAnimationFrame(sampleFrame);
-    return menu;
+    return { menu, recordQueryRemoval: () => recordState("query-removal") };
   };
   const registerCancellation = (
     target: HTMLElement,
@@ -91,7 +156,7 @@ export function mountEditor(options: {
       editor instanceof HTMLTextAreaElement ? editor.value : editor.textContent;
     if (!text.endsWith(options.trigger)) return;
     if (options.legacy) {
-      const menu = mountMenu("ak-emoji-typeahead");
+      const { menu } = mountMenu("ak-emoji-typeahead");
       registerCancellation(editor, () => menu.remove());
       return;
     }
@@ -103,11 +168,21 @@ export function mountEditor(options: {
     query.tabIndex = -1;
     query.textContent = options.trigger;
     editor.append(query);
-    const menu = mountMenu("fabric-editor-typeahead");
-    registerCancellation(query, () => {
-      menu.remove();
+    if (options.popupAfterQueryRemoval) {
       query.replaceWith(document.createTextNode(options.trigger));
       focusEnd();
+      setTimeout(() => mountMenu("fabric-editor-typeahead"), 45);
+      return;
+    }
+    const { menu, recordQueryRemoval } = mountMenu("fabric-editor-typeahead");
+    registerCancellation(query, () => {
+      if (!options.popupRemovalDelay) menu.remove();
+      query.replaceWith(document.createTextNode(options.trigger));
+      focusEnd();
+      if (options.popupRemovalDelay) {
+        recordQueryRemoval();
+        setTimeout(() => menu.remove(), options.popupRemovalDelay);
+      }
     });
     query.focus();
   });

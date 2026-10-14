@@ -1,15 +1,27 @@
-/* Keep layout available for the editor's positioning and Escape cancellation.
+/* biome-ignore-all lint/complexity/noImportantStyles: Override the host application's popup styles. */
+
+/* Keep a zero-sized layout box for legacy detection and Escape cancellation.
+ * An invisible full-sized popup can still create scrollbars while it mounts.
  * The query field is separate from the popup: never hide the user's text.
  * Declarative content CSS applies before the page's first paint, including
  * while focus/handlers are mounting or IME composition delays cancellation.
+ * Emoji items also identify portals that outlive their inline query field.
  */
 .ak-emoji-typeahead,
+.fabric-editor-typeahead:has(.ak-emoji-typeahead-item),
 :root:has([data-query-prefix=":"][contenteditable="true"])
   .fabric-editor-typeahead {
-  /* biome-ignore lint/complexity/noImportantStyles: Override the host application's popup styles. */
   opacity: 0 !important;
-  /* biome-ignore lint/complexity/noImportantStyles: Override the host application's popup styles. */
   visibility: hidden !important;
-  /* biome-ignore lint/complexity/noImportantStyles: Override the host application's popup styles. */
   pointer-events: none !important;
+  position: fixed !important;
+  inset: 0 auto auto 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  margin: 0 !important;
+  contain: strict !important;
 }

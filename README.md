@@ -61,7 +61,7 @@ The extension makes no network requests, stores no data, and has no telemetry or
 
 ### How suppression works
 
-The stylesheet loads at `document_start`. It hides the older `.ak-emoji-typeahead` popup and hides `.fabric-editor-typeahead` while the document contains a `[data-query-prefix=":"][contenteditable="true"]` query field. The inline query stays visible, and popup geometry is preserved for positioning and legacy detection.
+The stylesheet loads at `document_start`. It hides the older `.ak-emoji-typeahead` popup and hides `.fabric-editor-typeahead` when it contains `.ak-emoji-typeahead-item` suggestions or while the document contains a `[data-query-prefix=":"][contenteditable="true"]` query field. Matching the emoji items also covers a popup that mounts late or remains mounted after its query field disappears. The inline query stays visible. Hidden popups are collapsed into a zero-sized, contained box at the viewport origin so their contents cannot create temporary page or container scrollbars. They retain a client rect for legacy detection and Escape cancellation.
 
 A `MutationObserver` discovers query fields and popups. Cancellation waits for IME composition to finish and retries up to four times per attempt cycle; further editable input can reset the retries. Legacy cancellation also requires a colon query immediately before the active editor's caret.
 
@@ -157,7 +157,7 @@ Every TypeScript file in `src/`, `tooling/`, and `scripts/` must reach **100% st
 
 Unit tests cover domain boundaries, caret checks, French spacing, focus, IME handling, retries, and cleanup. Extension-validation tests enforce warning/error failures, the narrowly scoped Android exception, and process/file failure handling. Build and packaging tests use temporary projects, reject missing inputs and symlinks in source archives, check stale-output cleanup, and rebuild extracted sources to reproduce both ZIPs byte for byte. They verify that store materials and every TypeScript configuration are included in review sources, while store and website files stay out of the installed extension. jsdom fixtures supply layout and `isContentEditable`, which jsdom does not implement.
 
-Chromium tests load the actual unpacked extension. Firefox tests inject the compiled script and stylesheet; they do not test Firefox add-on installation or signing. Both use local HTML fixtures with intercepted requests and never access an Atlassian account. They check typing, Enter/Tab, mentions, slash commands, toolbar pickers, domain scope, frames, IME handling, and popup visibility at mount and on animation frames. Playwright writes its report to `playwright-report/` and retains traces for failed tests.
+Chromium tests load the actual unpacked extension. Firefox tests inject the compiled script and stylesheet; they do not test Firefox add-on installation or signing. Both use local HTML fixtures with intercepted requests and never access an Atlassian account. They check typing, Enter/Tab, mentions, slash commands, toolbar pickers, domain scope, frames, IME handling, and popup visibility and scroll dimensions at mount and on animation frames. Playwright writes its report to `playwright-report/` and retains traces for failed tests.
 
 Before a release, also check `Bonjour : suite`, both non-breaking-space variants, Enter/Tab, undo/redo, mentions, slash commands, and the toolbar emoji picker in a signed-in editor. Record the browser and editor tested; no issue submission is needed.
 
