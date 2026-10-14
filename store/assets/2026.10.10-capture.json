@@ -1,0 +1,30 @@
+{
+  "extensionVersion": "2026.10.10",
+  "browser": "Chromium 156.0.8078.4",
+  "platform": "darwin",
+  "viewport": {
+    "width": 1280,
+    "height": 800,
+    "deviceScaleFactor": 1
+  },
+  "fixture": "tests/e2e/fixture.ts",
+  "presentation": "store/assets/source/editor.html",
+  "network": "All requests intercepted locally; no Atlassian tenant accessed.",
+  "checks": [
+    "Colon preserved",
+    "Suggestions hidden synchronously at mount",
+    "Suggestions dismissed",
+    "Continued typing preserved",
+    "Manual emoji picker visible"
+  ],
+  "origins": {
+    "2026.10.10-en-screenshot-01-punctuation.png": "Origin: Genuine Chromium 156.0.8078.4 capture of Sans Emoji 2026.10.10, loaded as an unpacked extension. Local tests/e2e/fixture.ts with store/assets/source/editor.html presentation; all requests intercepted locally. No Atlassian tenant or private account data. Captured by tests/store-assets.ts; no compositing or AI-generated imagery.",
+    "2026.10.10-en-screenshot-02-picker.png": "Origin: Genuine Chromium 156.0.8078.4 capture of Sans Emoji 2026.10.10, loaded as an unpacked extension. Local tests/e2e/fixture.ts with store/assets/source/editor.html presentation; all requests intercepted locally. No Atlassian tenant or private account data. Captured by tests/store-assets.ts; no compositing or AI-generated imagery.",
+    "2026.10.10-fr-screenshot-01-punctuation.png": "Origin: Genuine Chromium 156.0.8078.4 capture of Sans Emoji 2026.10.10, loaded as an unpacked extension. Local tests/e2e/fixture.ts with store/assets/source/editor.html presentation; all requests intercepted locally. No Atlassian tenant or private account data. Captured by tests/store-assets.ts; no compositing or AI-generated imagery.",
+    "2026.10.10-fr-screenshot-02-picker.png": "Origin: Genuine Chromium 156.0.8078.4 capture of Sans Emoji 2026.10.10, loaded as an unpacked extension. Local tests/e2e/fixture.ts with store/assets/source/editor.html presentation; all requests intercepted locally. No Atlassian tenant or private account data. Captured by tests/store-assets.ts; no compositing or AI-generated imagery.",
+    "2026.10.10-promo-small.png": "Origin: Authored vector artwork in store/assets/source/promo-small.svg, using the paths from assets/icon.svg and the existing docs/styles.css palette and system typography. Exported with Inkscape; no AI-generated imagery.",
+    "2026.10.10-promo-marquee.png": "Origin: Authored vector artwork in store/assets/source/promo-marquee.svg, using the paths from assets/icon.svg and the existing docs/styles.css palette and system typography. Exported with Inkscape; no AI-generated imagery.",
+    "2026.10.10-icon-64.png": "Origin: extension/icons/icon64.png from Sans Emoji 2026.10.10, generated from assets/icon.svg. Pixels unchanged; only this provenance metadata was added.",
+    "2026.10.10-icon-128.png": "Origin: extension/icons/icon128.png from Sans Emoji 2026.10.10, generated from assets/icon.svg. Pixels unchanged; only this provenance metadata was added."
+  }
+}

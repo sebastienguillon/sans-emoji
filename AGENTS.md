@@ -2,6 +2,8 @@
 
 - Use pnpm 12+ consistently for dependencies, scripts, CI, and documentation. Keep `pnpm-lock.yaml`; do not introduce npm or Yarn lockfiles.
 - Keep all executable project code in strict TypeScript 7. Maintain 100% unit coverage for `src/`, `tooling/`, and `scripts/`.
+- Preserve the achieved popup suppression behavior: recognized colon-triggered emoji popups must never flash, and neither the popup nor its contents may introduce temporary scrollbars, layout shifts, or page flicker during creation, updates, or removal. Keep the typed colon/query visible. Performance optimizations must preserve these requirements.
+- Keep regression coverage for visibility and document/container scrolling at popup mount and on subsequent frames, including delayed or unavailable cancellation, IME composition, and popups that appear or remain after their query disappears. See the README's visual requirements and engineering decisions before changing suppression.
 - Keep browser source, Node tooling, and test fixtures in their separate TypeScript environments; `pnpm typecheck` must check all three. `pnpm check` includes a clean build and extension linting. Keep store copy in `store/` and release history in `release-notes/`.
 - `pnpm build` recreates a single unpacked `dist/` build for manual installation in both Chrome and Firefox. Keep Firefox metadata in the shared `extension/manifest.json`. `pnpm package` runs checks and creates `dist/sans-emoji.zip` for both browsers plus the matching Firefox review source ZIP, `dist/sans-emoji-sources.zip`. Keep the source archive allowlist in `tooling/package.ts` current when adding build inputs.
 - Use `YYYY.M.D` calendar versions. Keep `package.json` and `extension/manifest.json` versions identical.

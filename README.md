@@ -55,6 +55,15 @@ If you previously loaded `dist/chrome` or `dist/firefox/manifest.json`, remove t
 - Does not target existing emoji or separate toolbar emoji pickers. Mention and slash-command menus remain visible when no colon query is present.
 - Does not run on custom company domains, other self-hosted domains, or frames with unrelated URLs.
 
+### Related Atlassian requests
+
+These Atlassian feature requests describe the typing problem and the desire to turn off emoji autocomplete:
+
+- [JRACLOUD-39164 — Disable colon-triggered emoji suggestions in Jira Cloud](https://jira.atlassian.com/browse/JRACLOUD-39164).
+- [CONFSERVER-92667 — Disable emoji autocomplete independently of other shortcuts in Confluence](https://jira.atlassian.com/browse/CONFSERVER-92667).
+
+The Confluence request is marked fixed in version 9.1.0, as checked on 13 October 2026. It is included as background; Sans Emoji remains limited to the supported domains above and does not cover custom or self-hosted domains.
+
 ### Privacy and permissions
 
 The extension makes no network requests, stores no data, and has no telemetry or background process. Its scripts inspect the page's editor DOM locally to find and dismiss autocomplete. Site access is limited to the domains in [the manifest](extension/manifest.json); no additional extension API permissions are requested. See [PRIVACY.md](PRIVACY.md) for the full data-handling description and [the website policy](docs/privacy.html) for the public-facing version.
@@ -66,6 +75,37 @@ The stylesheet loads at `document_start`. It hides the older `.ak-emoji-typeahea
 A `MutationObserver` discovers query fields and popups. Cancellation waits for IME composition to finish and retries up to four times per attempt cycle; further editable input can reset the retries. Legacy cancellation also requires a colon query immediately before the active editor's caret.
 
 These selectors are internal Atlaskit conventions, not a stable API. They were inspected in `@atlaskit/editor-plugin-type-ahead@27.0.4` and `@atlaskit/emoji@72.5.10`; those packages are not extension dependencies.
+
+### Visual requirements and engineering decisions
+
+The achieved behavior is a requirement for future changes, including performance optimizations:
+
+- Recognized colon-triggered emoji popups must never become visible, even for a single frame while their contents are being created or removed.
+- Neither the hidden popup nor its contents may create temporary page or container scrollbars, shift surrounding content, or cause page flicker. Hiding a popup after a visible flash or layout jump is a regression.
+- Suppression must remain effective while cancellation handlers are delayed or unavailable, during IME composition, and when the popup and inline query have different lifetimes.
+- The typed colon and inline query must remain visible. Keep the separate toolbar emoji picker and unrelated autocomplete behavior covered by the existing regressions.
+
+The implementation reached this behavior through the following fixes and constraints:
+
+| Hurdle or constraint | Resolution and reason to preserve it |
+| --- | --- |
+| JavaScript-only cancellation allowed a popup to appear briefly before Escape took effect. | Load declarative suppression CSS at `document_start`, so visibility does not depend on an observer callback, timer, focus, or handler registration. JavaScript still asks the editor to cancel its internal autocomplete state. |
+| Making the popup transparent and invisible left its full-sized geometry in place. Its contents could still expand the page and briefly introduce scrollbars. | Collapse the popup into a fixed, zero-sized box at the viewport origin, reset minimum dimensions and box spacing, and apply strict containment. Cover both document and nested-container overflow. |
+| A selector tied only to the inline colon query stopped matching before a late popup appeared or an existing popup was removed. | Also identify modern emoji popups by `.ak-emoji-typeahead-item` descendants. Keep the query-based fallback for the earlier mounting phase. |
+| Legacy cancellation checks `getClientRects()` before sending Escape. Removing every layout box, for example with `display: none`, conflicts with that guard. | Retain a zero-sized client rect. The requirement is no visible popup and no induced overflow; the legacy detection path must still work. This is a compatibility constraint, not a claim that every alternative CSS approach was tested. |
+| CSS can hide a popup without exiting the editor's internal autocomplete state. | Use the editor's Escape handler to restore its own text and selection, wait for composition to finish, and bound retries. An unsupported handler can still consume Enter/Tab; that limitation must remain documented. |
+
+Escape includes both modern key fields and legacy `keyCode`/`which` fields. Its temporary listener contains only the extension's own event at the target, leaving other keyboard events alone. The [DOM unit tests](tests/unit/dom.test.ts) cover this behavior; editors that require Escape to reach an ancestor may need an adapter.
+
+The [browser regressions](tests/e2e/extension.spec.ts) and [fixture measurements](tests/e2e/fixture.ts) check visibility and scroll dimensions synchronously at mount and on subsequent animation frames, with separate delayed-handler and query/popup-lifetime cases. The [2026.10.14 validation record](release-notes/2026.10.14.md#validation) records the reproduced failures and the live Jira check in Zen, where the old popup increased document height from 1,166 px to 1,554 px and the fix kept it at 1,166 px. Keep the distinction between these measured cases and compatibility with untested live editors.
+
+### Performance considerations
+
+The controller is event-driven, with no permanent polling loop. Each matching document or frame has one mutation observer, four event listeners, at most one pending retry timer, a set of current candidates, and weakly held retry counts. Retries stop after four cancellation attempts per cycle; subsequent editable input can reset them. No page-content history or cache accumulates.
+
+The main potential cost is broad scanning: additions and changes to `class`, `style`, `hidden`, or `data-query-prefix` trigger searches of affected elements and their descendants throughout the document. Each editable input also searches the document for candidates. Repeated changes to a large container can therefore repeat large subtree searches even without an emoji popup. The document-root `:has(...)` CSS rule also warrants profiling for style recalculation cost. Live CPU and RAM overhead have not been measured; small source files and passing correctness tests do not establish negligible runtime cost.
+
+Any optimization should measure those costs and preserve the visual requirements above. In particular, moving suppression behind a timer or removing a selector solely to reduce work can reintroduce the flashes or layout shifts already fixed.
 
 ### Known limitations
 
@@ -169,7 +209,7 @@ Actions are pinned to full commit SHAs resolved from their official repositories
 
 Versions use `YYYY.M.D`, with no leading zeros. The final component is the day of the month, not a release counter. The version in `package.json` must match `extension/manifest.json`; the build rejects a mismatch.
 
-[Unreleased changes](release-notes/unreleased.md) track work after the [2026.10.10 notes](release-notes/2026.10.10.md). Historical notes describe that version's behavior and validation, not the current checkout.
+[Unreleased changes](release-notes/unreleased.md) track work after the [2026.10.14 notes](release-notes/2026.10.14.md). Historical notes describe that version's behavior and validation, not the current checkout.
 
 For a release:
 
@@ -185,7 +225,7 @@ For a release:
    ```
 
 4. Complete the manual editor checks above. If you update release notes or other source files after packaging, run `pnpm package` again so the review source ZIP matches the final files.
-5. Prepare the listing copy and submission fields from [store/](store/README.md), verify the public links, and capture release screenshots as described there. Include the versioned release notes with the upload or release handoff. Clear the changes incorporated from the unreleased notes and regenerate packages if those notes changed.
+5. Prepare the listing copy and submission fields from [store/](store/README.md), verify the public links, and capture release screenshots as described there. Include the versioned release notes with the upload or release handoff. For Firefox, also enter public version notes in AMO and provide working dedicated test credentials and an editable sample page in its private reviewer field; follow the [dashboard checklist](store/submission.md#firefox-dashboard-checklist). Keep credentials out of the repository and both archives. Clear the changes incorporated from the unreleased notes and regenerate packages if those notes changed.
 
 The direct `pnpm exec playwright test` command uses the existing build and preserves its ZIPs. The `pnpm test:browser` shortcut rebuilds first and removes them.
 
