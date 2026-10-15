@@ -1,19 +1,19 @@
 # Store images
 
-Upload PNG files from this folder. These assets show **Sans Emoji 2026.10.14** and use the existing cream, olive, system typography, and crossed-out emoji icon from the documentation site. Promotional tiles contain only the product name, so either listing language can use them.
+Upload PNG files from this folder. These assets show **Sans Emoji 2026.10.15** and use the existing cream, olive, system typography, and crossed-out emoji icon from the documentation site. Promotional tiles contain only the product name, so either listing language can use them.
 
 ## Upload map
 
 | Image | Dimensions | Where to use it |
 | --- | --- | --- |
-| [English: punctuation](2026.10.14-en-screenshot-01-punctuation.png) | 1280 × 800 | First screenshot, Chrome and Firefox |
-| [English: manual picker](2026.10.14-en-screenshot-02-picker.png) | 1280 × 800 | Second screenshot, Chrome and Firefox |
-| [French: punctuation](2026.10.14-fr-screenshot-01-punctuation.png) | 1280 × 800 | French alternative to the first screenshot |
-| [French: manual picker](2026.10.14-fr-screenshot-02-picker.png) | 1280 × 800 | French alternative to the second screenshot |
-| [Small promotional tile](2026.10.14-promo-small.png) | 440 × 280 | Required Chrome promotional image |
-| [Marquee promotional tile](2026.10.14-promo-marquee.png) | 1400 × 560 | Optional Chrome promotional image |
-| [Store icon](2026.10.14-icon-128.png) | 128 × 128 | Chrome icon |
-| [Store icon](2026.10.14-icon-64.png) | 64 × 64 | Firefox listing icon |
+| [English: punctuation](2026.10.15-en-screenshot-01-punctuation.png) | 1280 × 800 | First screenshot, Chrome and Firefox |
+| [English: manual picker](2026.10.15-en-screenshot-02-picker.png) | 1280 × 800 | Second screenshot, Chrome and Firefox |
+| [French: punctuation](2026.10.15-fr-screenshot-01-punctuation.png) | 1280 × 800 | French alternative to the first screenshot |
+| [French: manual picker](2026.10.15-fr-screenshot-02-picker.png) | 1280 × 800 | French alternative to the second screenshot |
+| [Small promotional tile](2026.10.15-promo-small.png) | 440 × 280 | Required Chrome promotional image |
+| [Marquee promotional tile](2026.10.15-promo-marquee.png) | 1400 × 560 | Optional Chrome promotional image |
+| [Store icon](2026.10.15-icon-128.png) | 128 × 128 | Chrome icon |
+| [Store icon](2026.10.15-icon-64.png) | 64 × 64 | Firefox listing icon |
 
 Use one language's two screenshots, in the order above; do not upload both language pairs as four different features. French images are prepared for translated listings. They do not add French manifest metadata; see the [store localization note](../README.md).
 
@@ -54,8 +54,8 @@ pnpm exec node tests/store-assets.ts
 
 The capture tool uses strict TypeScript checked by `pnpm typecheck`. It asserts the colon is preserved, suggestions are hidden at mount and then dismissed, subsequent text is preserved, and the manual picker is visible before saving. It exports the promotional tiles and icon copies and embeds provenance without altering their pixels.
 
-The filenames use the version read from the built manifest. Running the tool overwrites that version's eight PNGs and `capture.json`; review all outputs before uploading. Exact raster bytes can differ across renderer, font, and operating-system versions. Packaging remains deterministic for a fixed set of source files; image regeneration is separate from `pnpm package`.
+The filenames use the version read from the built manifest. Before capturing a new version, preserve the previous `capture.json` under its versioned name, as with [2026.10.14-capture.json](2026.10.14-capture.json). Running the tool overwrites that version's eight PNGs and `capture.json`; review all outputs before uploading. Exact raster bytes can differ across renderer, font, and operating-system versions. Packaging remains deterministic for a fixed set of source files; image regeneration is separate from `pnpm package`.
 
-This folder and the capture tool are included in the Firefox review source ZIP, not the installed extension ZIP. See the [2026.10.14 release notes](../../release-notes/2026.10.14.md) for this submission-material update.
+This folder and the capture tool are included in the Firefox review source ZIP, not the installed extension ZIP. See the [2026.10.15 release notes](../../release-notes/2026.10.15.md) for this submission-material update.
 
-The original `2026.10.10-*.png` assets remain available for reference, with their provenance preserved in [2026.10.10-capture.json](2026.10.10-capture.json). Those assets were prepared after the `v2026.10.10` tag; the tag is unchanged. Use the current upload map for the 2026.10.14 submission.
+Historical assets remain available for reference. The original `2026.10.10-*.png` images have their provenance in [2026.10.10-capture.json](2026.10.10-capture.json); they were prepared after the `v2026.10.10` tag, which is unchanged. The abandoned `2026.10.14` preparation retains its `2026.10.14-*.png` images and [2026.10.14-capture.json](2026.10.14-capture.json). Use the current upload map for the replacement 2026.10.15 submission.

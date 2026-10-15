@@ -1,5 +1,5 @@
 {
-  "extensionVersion": "2026.10.14",
+  "extensionVersion": "2026.10.15",
   "browser": "Chromium 156.0.8078.4",
   "platform": "darwin",
   "viewport": {
@@ -18,13 +18,13 @@
     "Manual emoji picker visible"
   ],
   "origins": {
-    "2026.10.14-en-screenshot-01-punctuation.png": "Origin: Genuine Chromium 156.0.8078.4 capture of Sans Emoji 2026.10.14, loaded as an unpacked extension. Local tests/e2e/fixture.ts with store/assets/source/editor.html presentation; all requests intercepted locally. No Atlassian tenant or private account data. Captured by tests/store-assets.ts; no compositing or AI-generated imagery.",
-    "2026.10.14-en-screenshot-02-picker.png": "Origin: Genuine Chromium 156.0.8078.4 capture of Sans Emoji 2026.10.14, loaded as an unpacked extension. Local tests/e2e/fixture.ts with store/assets/source/editor.html presentation; all requests intercepted locally. No Atlassian tenant or private account data. Captured by tests/store-assets.ts; no compositing or AI-generated imagery.",
-    "2026.10.14-fr-screenshot-01-punctuation.png": "Origin: Genuine Chromium 156.0.8078.4 capture of Sans Emoji 2026.10.14, loaded as an unpacked extension. Local tests/e2e/fixture.ts with store/assets/source/editor.html presentation; all requests intercepted locally. No Atlassian tenant or private account data. Captured by tests/store-assets.ts; no compositing or AI-generated imagery.",
-    "2026.10.14-fr-screenshot-02-picker.png": "Origin: Genuine Chromium 156.0.8078.4 capture of Sans Emoji 2026.10.14, loaded as an unpacked extension. Local tests/e2e/fixture.ts with store/assets/source/editor.html presentation; all requests intercepted locally. No Atlassian tenant or private account data. Captured by tests/store-assets.ts; no compositing or AI-generated imagery.",
-    "2026.10.14-promo-small.png": "Origin: Authored vector artwork in store/assets/source/promo-small.svg, using the paths from assets/icon.svg and the existing docs/styles.css palette and system typography. Exported with Inkscape; no AI-generated imagery.",
-    "2026.10.14-promo-marquee.png": "Origin: Authored vector artwork in store/assets/source/promo-marquee.svg, using the paths from assets/icon.svg and the existing docs/styles.css palette and system typography. Exported with Inkscape; no AI-generated imagery.",
-    "2026.10.14-icon-64.png": "Origin: extension/icons/icon64.png from Sans Emoji 2026.10.14, generated from assets/icon.svg. Pixels unchanged; only this provenance metadata was added.",
-    "2026.10.14-icon-128.png": "Origin: extension/icons/icon128.png from Sans Emoji 2026.10.14, generated from assets/icon.svg. Pixels unchanged; only this provenance metadata was added."
+    "2026.10.15-en-screenshot-01-punctuation.png": "Origin: Genuine Chromium 156.0.8078.4 capture of Sans Emoji 2026.10.15, loaded as an unpacked extension. Local tests/e2e/fixture.ts with store/assets/source/editor.html presentation; all requests intercepted locally. No Atlassian tenant or private account data. Captured by tests/store-assets.ts; no compositing or AI-generated imagery.",
+    "2026.10.15-en-screenshot-02-picker.png": "Origin: Genuine Chromium 156.0.8078.4 capture of Sans Emoji 2026.10.15, loaded as an unpacked extension. Local tests/e2e/fixture.ts with store/assets/source/editor.html presentation; all requests intercepted locally. No Atlassian tenant or private account data. Captured by tests/store-assets.ts; no compositing or AI-generated imagery.",
+    "2026.10.15-fr-screenshot-01-punctuation.png": "Origin: Genuine Chromium 156.0.8078.4 capture of Sans Emoji 2026.10.15, loaded as an unpacked extension. Local tests/e2e/fixture.ts with store/assets/source/editor.html presentation; all requests intercepted locally. No Atlassian tenant or private account data. Captured by tests/store-assets.ts; no compositing or AI-generated imagery.",
+    "2026.10.15-fr-screenshot-02-picker.png": "Origin: Genuine Chromium 156.0.8078.4 capture of Sans Emoji 2026.10.15, loaded as an unpacked extension. Local tests/e2e/fixture.ts with store/assets/source/editor.html presentation; all requests intercepted locally. No Atlassian tenant or private account data. Captured by tests/store-assets.ts; no compositing or AI-generated imagery.",
+    "2026.10.15-promo-small.png": "Origin: Authored vector artwork in store/assets/source/promo-small.svg, using the paths from assets/icon.svg and the existing docs/styles.css palette and system typography. Exported with Inkscape; no AI-generated imagery.",
+    "2026.10.15-promo-marquee.png": "Origin: Authored vector artwork in store/assets/source/promo-marquee.svg, using the paths from assets/icon.svg and the existing docs/styles.css palette and system typography. Exported with Inkscape; no AI-generated imagery.",
+    "2026.10.15-icon-64.png": "Origin: extension/icons/icon64.png from Sans Emoji 2026.10.15, generated from assets/icon.svg. Pixels unchanged; only this provenance metadata was added.",
+    "2026.10.15-icon-128.png": "Origin: extension/icons/icon128.png from Sans Emoji 2026.10.15, generated from assets/icon.svg. Pixels unchanged; only this provenance metadata was added."
   }
 }

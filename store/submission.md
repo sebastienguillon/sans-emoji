@@ -38,11 +38,11 @@ The same `dist/sans-emoji.zip` is used for Chrome and Firefox. Firefox requires 
 3. Check Enter/Tab, undo/redo, mentions, slash commands, and the separate toolbar emoji picker. Intentional `:smile` searches are suppressed as well.
 4. Record the browser, version, editor, and observed results. Do not submit a comment or issue merely to test typing.
 
-Known limitations: internal editor markup may change; custom domains are outside scope; an editor that ignores synthetic Escape may keep an invisible autocomplete state; simultaneous menus are not independently scoped while a colon query exists. Live editor checks must be recorded for the release rather than inferred from automated fixtures.
+Known limitations: internal editor markup may change; custom domains are outside scope; an editor that ignores synthetic Escape may keep an invisible autocomplete state that consumes Enter or Tab; simultaneous menus are not independently scoped while a colon query exists. A panel without emoji items, such as an error fallback, can appear after its query disappears and until the editor removes it. Live editor checks must be recorded for the release rather than inferred from automated fixtures.
 
 ### Firefox dashboard checklist
 
-- **Version notes:** enter the user-visible features, fixes, and relevant limitations from the matching [versioned release notes](../release-notes/). For `2026.10.14`, use the prepared public notes in [its release handoff](releases/2026.10.14.md). These notes must also be entered in the dashboard; including the Markdown file in the source ZIP does not fill the field. Do not paste development history, validation logs, or credentials into public version notes.
+- **Version notes:** enter the user-visible features, fixes, and relevant limitations from the matching [versioned release notes](../release-notes/). For `2026.10.15`, use the prepared public notes in [its release handoff](releases/2026.10.15.md); the planned `2026.10.14` release was abandoned. These notes must also be entered in the dashboard; including the Markdown file in the source ZIP does not fill the field. Do not paste development history, validation logs, or credentials into public version notes.
 - **Notes to Reviewer:** use the template below. Copy it into AMO's private reviewer field, then replace the placeholders there. Supply a supported HTTPS test-site URL, exact editor location, dedicated test username/password, and any additional login steps. Verify the account can log in and edit the sample page from a fresh browser session, and keep access working during review. Do not put credentials in this repository, either ZIP, public release notes, or listing copy.
 - **Source code:** upload `dist/sans-emoji-sources.zip` separately, because the extension's TypeScript is bundled into JavaScript. Include the build instructions below in the reviewer notes.
 - **Validation report:** open the full report and read the actual warning. A checklist reminder does not establish which technical warning was reported. Local validation's desktop-only Android exception does not prove AMO's warning is the same.
@@ -69,7 +69,7 @@ Steps to test:
 3. Verify typing, Enter/Tab, undo/redo, @mentions, slash commands, and the separate toolbar emoji picker. Intentional :smile autocomplete is suppressed as well; use the toolbar picker to insert an emoji.
 4. Discard the draft when finished; no comment or issue submission is needed.
 
-Known limitations: custom company domains are outside scope; Atlassian markup changes can affect support. An editor that ignores synthetic Escape may retain an invisible autocomplete state. Simultaneous menus are not independently scoped while a colon query exists.
+Known limitations: custom company domains are outside scope; Atlassian markup changes can affect support. An editor that ignores synthetic Escape may retain an invisible autocomplete state that consumes Enter or Tab. Simultaneous menus are not independently scoped while a colon query exists. A panel without emoji items, such as an error fallback, can appear after its query disappears and until the editor removes it.
 
 Privacy: editor content is processed locally. The extension does not store or transmit user data, make network requests, or include analytics or remote code.
 
