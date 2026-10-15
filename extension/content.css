@@ -6,11 +6,14 @@
  * Declarative content CSS applies before the page's first paint, including
  * while focus/handlers are mounting or IME composition delays cancellation.
  * Emoji items also identify portals that outlive their inline query field.
+ * The document-wide :has() names only data-query-prefix, which Atlaskit sets
+ * solely on its contenteditable query field: naming contenteditable as well
+ * makes Firefox re-check the document whenever any editable node view is
+ * inserted, removed or toggled.
  */
 .ak-emoji-typeahead,
 .fabric-editor-typeahead:has(.ak-emoji-typeahead-item),
-:root:has([data-query-prefix=":"][contenteditable="true"])
-  .fabric-editor-typeahead {
+:root:has([data-query-prefix=":"]) .fabric-editor-typeahead {
   opacity: 0 !important;
   visibility: hidden !important;
   pointer-events: none !important;

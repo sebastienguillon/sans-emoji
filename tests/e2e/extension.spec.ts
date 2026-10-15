@@ -1,7 +1,7 @@
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { test as base, expect } from "@playwright/test";
+import { test as base, expect, type Page } from "@playwright/test";
 import { isAllowedLocation } from "../../src/dom.ts";
 import { mountEditor } from "./fixture.ts";
 
@@ -321,3 +321,186 @@ for (const overflow of ["document", "container"] as const) {
     await expect(page.locator("#editor")).toHaveText("Bonjour : suite");
   });
 }
+
+const expectCancelledQuery = async (page: Page): Promise<void> => {
+  await expect(page.locator("[data-query-prefix]")).toHaveCount(0);
+  await expect(page.locator("#suggestions")).toHaveCount(0);
+  await expect(page.locator("#status")).toHaveAttribute(
+    "data-visible-at-mount",
+    "false",
+  );
+  await expect(page.locator("#status")).not.toHaveAttribute(
+    "data-visible-frame",
+    "true",
+  );
+  await expect(page.locator("#editor")).toBeFocused();
+  await page.keyboard.type(" suite");
+  await expect(page.locator("#editor")).toHaveText("Bonjour : suite");
+};
+
+for (const queryMark of ["attached", "detached"] as const) {
+  test(`cancels a query rendered into a ${queryMark} decoration mark`, async ({
+    page,
+  }) => {
+    await page.goto("https://test.atlassian.net/fixture");
+    await page.evaluate(mountEditor, {
+      space: " ",
+      trigger: ":",
+      legacy: false,
+      queryMark,
+    });
+    await page.keyboard.press(":");
+    await expectCancelledQuery(page);
+  });
+}
+
+test("cancels a query focused on the next frame, as Atlaskit does", async ({
+  page,
+}) => {
+  await page.goto("https://test.atlassian.net/fixture");
+  await page.evaluate(mountEditor, {
+    space: " ",
+    trigger: ":",
+    legacy: false,
+    queryMark: "detached" as const,
+    focusQuery: "frame" as const,
+  });
+  await page.keyboard.press(":");
+  await expectCancelledQuery(page);
+});
+
+// Firefox 157 missed the :has() update for the previous contenteditable
+// argument when the mark followed an element in its paragraph.
+for (const [where, paragraphHtml] of [
+  ["after text", "Bonjour "],
+  ["after an inline element", "Bonjour <strong>gras</strong> "],
+  ["before a trailing break", 'Bonjour <br class="ProseMirror-trailingBreak">'],
+] as const) {
+  for (const queryMark of ["attached", "detached"] as const) {
+    test(`hides an already-rendered menu while a colon query in a ${queryMark} decoration mark exists ${where}`, async ({
+      page,
+    }) => {
+      await page.goto("https://test.atlassian.net/fixture");
+      const states = await page.evaluate(
+        async ({ order, paragraphHtml }) => {
+          const frame = (): Promise<void> =>
+            new Promise((resolve) => requestAnimationFrame(() => resolve()));
+          document.body.innerHTML = `<div id="editor" contenteditable="true"><p>${paragraphHtml}</p></div>`;
+          const menu = document.createElement("div");
+          menu.className = "fabric-editor-typeahead";
+          menu.style.cssText =
+            "position: absolute; width: 200px; height: 100px";
+          menu.textContent = "Suggestions";
+          document.body.append(menu);
+          const visible = (): boolean =>
+            getComputedStyle(menu).visibility !== "hidden";
+          await frame();
+          const before = visible();
+          const mark = document.createElement("mark");
+          mark.setAttribute("contenteditable", "false");
+          mark.setAttribute("data-type-ahead-query", "true");
+          const query = document.createElement("span");
+          query.setAttribute("contenteditable", "true");
+          query.setAttribute("data-query-prefix", ":");
+          query.textContent = ":";
+          const paragraph = document.querySelector("#editor p") as HTMLElement;
+          const trailingBreak = paragraph.querySelector("br");
+          const place = (node: Node): void => {
+            if (trailingBreak) trailingBreak.before(node);
+            else paragraph.append(node);
+          };
+          if (order === "attached") {
+            place(mark);
+            mark.append(query);
+          } else {
+            mark.append(query);
+            place(mark);
+          }
+          const atInsertion = visible();
+          await frame();
+          const nextFrame = visible();
+          mark.remove();
+          return { before, atInsertion, nextFrame, afterRemoval: visible() };
+        },
+        { order: queryMark, paragraphHtml },
+      );
+      expect(states).toEqual({
+        before: true,
+        atInsertion: false,
+        nextFrame: false,
+        afterRemoval: true,
+      });
+    });
+  }
+}
+
+test("retries Escape for a focused query that becomes editable without focus or input", async ({
+  page,
+}) => {
+  await page.goto("https://test.atlassian.net/fixture");
+  const before = await page.evaluate(async () => {
+    const wait = (ms: number): Promise<void> =>
+      new Promise((resolve) => setTimeout(resolve, ms));
+    document.body.innerHTML = '<div id="editor" contenteditable="true"></div>';
+    const query = document.createElement("span");
+    query.id = "query";
+    query.setAttribute("data-query-prefix", ":");
+    query.setAttribute("contenteditable", "false");
+    query.tabIndex = -1;
+    const input = document.createElement("input");
+    query.append(input);
+    document.querySelector("#editor")?.append(query);
+    input.focus();
+    const counter = window as unknown as { escapes: number };
+    counter.escapes = 0;
+    query.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") counter.escapes++;
+    });
+    await wait(200);
+    return counter.escapes;
+  });
+  expect(before).toBe(0);
+  await page.evaluate(() =>
+    document.querySelector("#query")?.setAttribute("contenteditable", "true"),
+  );
+  const escapes = (): Promise<number> =>
+    page.evaluate(() => (window as unknown as { escapes: number }).escapes);
+  await expect.poll(escapes).toBe(4);
+  // Four attempts per cycle: nothing follows the last retry.
+  await page.waitForTimeout(100);
+  expect(await escapes()).toBe(4);
+});
+
+test("cancels a legacy popup shown again through its inline style without focus or input", async ({
+  page,
+}) => {
+  await page.goto("https://bitbucket.org/fixture");
+  const counts = await page.evaluate(async () => {
+    const wait = (ms: number): Promise<void> =>
+      new Promise((resolve) => setTimeout(resolve, ms));
+    const field = document.createElement("textarea");
+    field.value = "Bonjour :";
+    document.body.append(field);
+    field.focus();
+    field.setSelectionRange(field.value.length, field.value.length);
+    const popup = document.createElement("div");
+    popup.className = "ak-emoji-typeahead";
+    popup.style.display = "none";
+    document.body.append(popup);
+    let escapes = 0;
+    field.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+      escapes++;
+      popup.style.display = "none";
+    });
+    await wait(150);
+    const whileHidden = escapes;
+    popup.style.display = "block";
+    await wait(150);
+    const firstShow = escapes;
+    popup.style.display = "block";
+    await wait(150);
+    return { whileHidden, firstShow, secondShow: escapes };
+  });
+  expect(counts).toEqual({ whileHidden: 0, firstShow: 1, secondShow: 2 });
+});

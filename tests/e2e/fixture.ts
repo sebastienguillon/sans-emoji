@@ -9,6 +9,11 @@ export function mountEditor(options: {
   popupAfterQueryRemoval?: boolean;
   ignoreEscape?: boolean;
   overflow?: "document" | "container";
+  // Atlaskit renders the query inside a decoration <mark>: into an attached
+  // mark ("attached") or before ProseMirror attaches it ("detached").
+  queryMark?: "attached" | "detached";
+  // Atlaskit focuses the query span on the next animation frame by default.
+  focusQuery?: "frame";
 }): void {
   document.body.innerHTML =
     '<button id="picker" type="button">Emoji picker</button><div id="status"></div>';
@@ -167,9 +172,18 @@ export function mountEditor(options: {
     query.setAttribute("data-query-prefix", options.trigger);
     query.tabIndex = -1;
     query.textContent = options.trigger;
-    editor.append(query);
+    let inline: HTMLElement = query;
+    if (options.queryMark) {
+      inline = document.createElement("mark");
+      inline.setAttribute("contenteditable", "false");
+      inline.setAttribute("data-type-ahead-query", "true");
+      inline.setAttribute("data-trigger", options.trigger);
+      if (options.queryMark === "attached") editor.append(inline);
+      inline.append(query);
+    }
+    if (inline.parentNode === null) editor.append(inline);
     if (options.popupAfterQueryRemoval) {
-      query.replaceWith(document.createTextNode(options.trigger));
+      inline.replaceWith(document.createTextNode(options.trigger));
       focusEnd();
       setTimeout(() => mountMenu("fabric-editor-typeahead"), 45);
       return;
@@ -177,14 +191,16 @@ export function mountEditor(options: {
     const { menu, recordQueryRemoval } = mountMenu("fabric-editor-typeahead");
     registerCancellation(query, () => {
       if (!options.popupRemovalDelay) menu.remove();
-      query.replaceWith(document.createTextNode(options.trigger));
+      inline.replaceWith(document.createTextNode(options.trigger));
       focusEnd();
       if (options.popupRemovalDelay) {
         recordQueryRemoval();
         setTimeout(() => menu.remove(), options.popupRemovalDelay);
       }
     });
-    query.focus();
+    if (options.focusQuery === "frame")
+      requestAnimationFrame(() => query.focus());
+    else query.focus();
   });
   focusEnd();
 }

@@ -1,6 +1,7 @@
 export const QUERY_SELECTOR = '[data-query-prefix=":"][contenteditable="true"]';
 export const LEGACY_SELECTOR = ".ak-emoji-typeahead";
-export const CANDIDATE_SELECTOR = `${QUERY_SELECTOR}, ${LEGACY_SELECTOR}`;
+export const CANDIDATE_SELECTORS = [QUERY_SELECTOR, LEGACY_SELECTOR] as const;
+export const CANDIDATE_SELECTOR = CANDIDATE_SELECTORS.join(", ");
 
 const DOMAINS = ["atlassian.net", "atlassian.com", "bitbucket.org"] as const;
 

@@ -11,6 +11,9 @@ Object.defineProperty(HTMLElement.prototype, "isContentEditable", {
 });
 beforeEach(() => {
   document.body.innerHTML = "";
+  // Attribute changes must produce mutation records in every test.
+  document.body.removeAttribute("class");
+  document.body.removeAttribute("style");
   vi.spyOn(Element.prototype, "getClientRects").mockImplementation(function (
     this: Element,
   ) {

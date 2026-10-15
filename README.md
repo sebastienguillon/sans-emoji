@@ -70,9 +70,9 @@ The extension makes no network requests, stores no data, and has no telemetry or
 
 ### How suppression works
 
-The stylesheet loads at `document_start`. It hides the older `.ak-emoji-typeahead` popup and hides `.fabric-editor-typeahead` when it contains `.ak-emoji-typeahead-item` suggestions or while the document contains a `[data-query-prefix=":"][contenteditable="true"]` query field. Matching the emoji items also covers a popup that mounts late or remains mounted after its query field disappears. The inline query stays visible. Hidden popups are collapsed into a zero-sized, contained box at the viewport origin so their contents cannot create temporary page or container scrollbars. They retain a client rect for legacy detection and Escape cancellation.
+The stylesheet loads at `document_start`. It hides the older `.ak-emoji-typeahead` popup and hides `.fabric-editor-typeahead` when it contains `.ak-emoji-typeahead-item` suggestions or while the document contains a `[data-query-prefix=":"]` query field. Atlaskit sets `data-query-prefix` only on its contenteditable query field; the script still cancels only `contenteditable="true"` fields. Matching the emoji items also covers a popup that mounts late or remains mounted after its query field disappears. The inline query stays visible. Hidden popups are collapsed into a zero-sized, contained box at the viewport origin so their contents cannot create temporary page or container scrollbars. They retain a client rect for legacy detection and Escape cancellation.
 
-A `MutationObserver` discovers query fields and popups. Cancellation waits for IME composition to finish and retries up to four times per attempt cycle; further editable input can reset the retries. Legacy cancellation also requires a colon query immediately before the active editor's caret.
+A `MutationObserver` keeps a registry of the query fields and popups in the document. Input, focus and composition-end events read that registry instead of searching the document. Cancellation waits for IME composition to finish and retries up to four times per attempt cycle; further editable input can reset the retries. Legacy cancellation also requires a colon query immediately before the active editor's caret.
 
 These selectors are internal Atlaskit conventions, not a stable API. They were inspected in `@atlaskit/editor-plugin-type-ahead@27.0.4` and `@atlaskit/emoji@72.5.10`; those packages are not extension dependencies.
 
@@ -94,6 +94,8 @@ The implementation reached this behavior through the following fixes and constra
 | A selector tied only to the inline colon query stopped matching before a late popup appeared or an existing popup was removed. | Also identify modern emoji popups by `.ak-emoji-typeahead-item` descendants. Keep the query-based fallback for the earlier mounting phase. |
 | Legacy cancellation checks `getClientRects()` before sending Escape. Removing every layout box, for example with `display: none`, conflicts with that guard. | Retain a zero-sized client rect. The requirement is no visible popup and no induced overflow; the legacy detection path must still work. This is a compatibility constraint, not a claim that every alternative CSS approach was tested. |
 | CSS can hide a popup without exiting the editor's internal autocomplete state. | Use the editor's Escape handler to restore its own text and selection, wait for composition to finish, and bound retries. An unsupported handler can still consume Enter/Tab; that limitation must remain documented. |
+| The document-wide query fallback named `contenteditable`. Once any autocomplete menu had been styled, Firefox re-checked the whole document whenever an editable node view was inserted, removed or toggled: about 30 ms per frame of subtree churn on a 29,000-element page. | Name only `data-query-prefix`, which Atlaskit sets solely on its contenteditable query field. Keep the rule document-wide and declarative: variants scoped by panel content (options or known rows) let recognized panels paint in testing. |
+| The controller searched the whole document on every editable input and searched the subtree of every changed element: up to about 1 ms per keystroke and per page-wide class or style change at 29,000 elements. | Keep a registry of candidates from mutation records, searching added subtrees with one single-selector query per selector. Do not move discovery to focus-only, selection-driven or CSS-animation triggers: in testing each one delayed or dropped legacy cancellation, so a hidden menu consumed Enter. |
 
 Escape includes both modern key fields and legacy `keyCode`/`which` fields. Its temporary listener contains only the extension's own event at the target, leaving other keyboard events alone. The [DOM unit tests](tests/unit/dom.test.ts) cover this behavior; editors that require Escape to reach an ancestor may need an adapter.
 
@@ -101,16 +103,37 @@ The [browser regressions](tests/e2e/extension.spec.ts) and [fixture measurements
 
 ### Performance considerations
 
-The controller is event-driven, with no permanent polling loop. Each matching document or frame has one mutation observer, four event listeners, at most one pending retry timer, a set of current candidates, and weakly held retry counts. Retries stop after four cancellation attempts per cycle; subsequent editable input can reset them. No page-content history or cache accumulates.
+The controller is event-driven, with no permanent polling loop. Each matching document or frame has one mutation observer, four event listeners, at most one pending retry timer, a registry of the query fields and popups currently in the document, the candidates of the current attempt cycle, and weakly held retry counts. Retries stop after four cancellation attempts per cycle; subsequent editable input can reset them. Removal records prune the registry, so no page-content history or cache accumulates.
 
-The main potential cost is broad scanning: additions and changes to `class`, `style`, `hidden`, or `data-query-prefix` trigger searches of affected elements and their descendants throughout the document. Each editable input also searches the document for candidates. Repeated changes to a large container can therefore repeat large subtree searches even without an emoji popup. The document-root `:has(...)` CSS rule also warrants profiling for style recalculation cost. Live CPU and RAM overhead have not been measured; small source files and passing correctness tests do not establish negligible runtime cost.
+The registry keeps routine page activity cheap:
+
+- Added subtrees are searched with one query per candidate selector. Browsers keep fast paths for a single compound selector but match a comma-separated list element by element. A node whose parent was added in the same batch is covered by the parent's search.
+- Changes to `class`, `data-query-prefix` or `contenteditable` register only the changed element. Every observed attribute change, including `style` and `hidden`, re-checks only the known candidates inside the changed element.
+- A batch of more than 1,024 records, such as a server-rendered page being parsed, rebuilds the registry with one pair of document queries.
+- Input, focus and composition-end events first apply pending records; input and focus then return immediately while the registry is empty. Composition start only pauses cancellation.
+- Page listeners can answer the synthetic Escape with mutations and input or focus events. Records taken during that dispatch update the registry at once but re-arm candidates only after the retry timer is set, so they cannot shorten the 32 ms retry interval.
+
+The document-wide `:has()` fallback is the stylesheet's main cost. Browsers evaluate it once any autocomplete menu (`@`, `/` or `:`) has been styled, and from then on re-check the document after relevant mutations for the rest of the page's life. Naming only `data-query-prefix` limits Firefox's re-checks to the rare elements that carry that attribute. Chromium also re-checks after inserting or removing any element that has attributes, and that cost remains.
+
+The following overheads were measured against no extension on a synthetic Atlassian-shaped page of 29,164 elements, in headless Chromium 156 and Firefox 157, using a scratch Playwright harness that is not part of this repository. Each value is a median of five repetitions; ranges span two separate benchmark runs. Chromium figures are main-thread script time; Firefox figures are in-page busy time.
+
+| Activity | Chromium before → after | Firefox before → after |
+| --- | --- | --- |
+| Typing in the editor, per keystroke | 1.00–1.06 → 0.001–0.002 ms | 0.52–0.55 → under 0.04 ms |
+| Class or style change on a page-wide container | 0.93–0.95 → under 0.001 ms | 0.83 → 0.005 ms |
+| Frame with 600 class and style changes | 0.54–0.55 → 0.08 ms | 0.82–0.86 → 0.39–0.47 ms |
+| Frame of subtree churn after any menu was used | Style cost unchanged | 28.0–29.8 → 0.2 ms |
+| `contenteditable` or query-field change after any menu was used | Style cost unchanged | 1.10–1.19 → under 0.04 ms |
+
+No live tenant was benchmarked. A console probe on a signed-in Jira issue of about 4,500 elements in Firefox recorded about six relevant mutation records per second and under 1 ms of scanning in 30 seconds with the previous controller. Small pages were therefore cheap before; the savings grow with page size and with DOM churn after a menu has been used.
 
 Any optimization should measure those costs and preserve the visual requirements above. In particular, moving suppression behind a timer or removing a selector solely to reduce work can reintroduce the flashes or layout shifts already fixed.
 
 ### Known limitations
 
 - If an editor ignores synthetic Escape, recognized suggestions stay hidden but the editor may still consume Enter or Tab. Legacy editors that handle Escape above the focused field may need a dedicated adapter.
-- The modern CSS rule applies to matching suggestion panels throughout the document while any colon query exists. Simultaneous autocomplete menus in multiple editors are not independently scoped.
+- The modern CSS rule applies to matching suggestion panels throughout the document while any `[data-query-prefix=":"]` element exists. Simultaneous autocomplete menus in multiple editors are not independently scoped.
+- A suggestion panel without emoji items, such as Atlaskit's error fallback, can paint after its query disappears and until Atlaskit unmounts it.
 - Atlassian markup changes may require new selectors. Automated tests use representative fixtures and do not establish compatibility with every live editor or verify its real undo/redo transactions.
 
 ## Troubleshooting
@@ -197,7 +220,7 @@ Every TypeScript file in `src/`, `tooling/`, and `scripts/` must reach **100% st
 
 Unit tests cover domain boundaries, caret checks, French spacing, focus, IME handling, retries, and cleanup. Extension-validation tests enforce warning/error failures, the narrowly scoped Android exception, and process/file failure handling. Build and packaging tests use temporary projects, reject missing inputs and symlinks in source archives, check stale-output cleanup, and rebuild extracted sources to reproduce both ZIPs byte for byte. They verify that store materials and every TypeScript configuration are included in review sources, while store and website files stay out of the installed extension. jsdom fixtures supply layout and `isContentEditable`, which jsdom does not implement.
 
-Chromium tests load the actual unpacked extension. Firefox tests inject the compiled script and stylesheet; they do not test Firefox add-on installation or signing. Both use local HTML fixtures with intercepted requests and never access an Atlassian account. They check typing, Enter/Tab, mentions, slash commands, toolbar pickers, domain scope, frames, IME handling, and popup visibility and scroll dimensions at mount and on animation frames. Playwright writes its report to `playwright-report/` and retains traces for failed tests.
+Chromium tests load the actual unpacked extension. Firefox tests inject the compiled script and stylesheet; they do not test Firefox add-on installation or signing. Both use local HTML fixtures with intercepted requests and never access an Atlassian account. They check typing, Enter/Tab, mentions, slash commands, toolbar pickers, domain scope, frames, IME handling, Atlaskit-style decoration marks with next-frame focus, and popup visibility and scroll dimensions at mount and on animation frames. Playwright writes its report to `playwright-report/` and retains traces for failed tests.
 
 Before a release, also check `Bonjour : suite`, both non-breaking-space variants, Enter/Tab, undo/redo, mentions, slash commands, and the toolbar emoji picker in a signed-in editor. Record the browser and editor tested; no issue submission is needed.
 
