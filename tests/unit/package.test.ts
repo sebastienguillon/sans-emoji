@@ -35,6 +35,8 @@ afterEach(async () => {
     roots.splice(0).map((root) => rm(root, { recursive: true, force: true })),
   );
 });
+// Rebuild and recompress the full source archive, including historical store
+// images. Slower CI runners need more than the default five-second test budget.
 it("creates only a shared extension ZIP and reproducible Firefox review sources", async () => {
   const root = await fixture();
   for (const path of [
@@ -159,7 +161,7 @@ it("creates only a shared extension ZIP and reproducible Firefox review sources"
       await readFile(join(root, "dist", name)),
     );
   }
-});
+}, 30_000);
 it("rejects symlinks instead of including files outside the source tree", async () => {
   const root = await fixture();
   await symlink(join(root, "package.json"), join(root, "src/external.ts"));
