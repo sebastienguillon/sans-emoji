@@ -232,7 +232,7 @@ Actions are pinned to full commit SHAs resolved from their official repositories
 
 Versions use `YYYY.M.D`, with no leading zeros. The final component is the day of the month, not a release counter. The version in `package.json` must match `extension/manifest.json`; the build rejects a mismatch.
 
-[Unreleased changes](release-notes/unreleased.md) track work after the [2026.10.15 release](release-notes/2026.10.15.md). The planned 2026.10.14 release was abandoned; its changes are included in 2026.10.15. Historical notes describe that version's behavior and validation, not the current checkout.
+[Unreleased changes](release-notes/unreleased.md) track work after the [2026.10.16 release](release-notes/2026.10.16.md). The planned 2026.10.14 release was abandoned; its changes are included in 2026.10.15. Historical notes describe that version's behavior and validation, not the current checkout.
 
 For a release:
 

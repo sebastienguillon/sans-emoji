@@ -15,7 +15,7 @@ The Markdown headings label dashboard fields; paste the field text rather than t
 
 Follow [Packaging and releases](../README.md#packaging-and-releases). Use `dist/sans-emoji.zip` for either browser and attach `dist/sans-emoji-sources.zip` separately when Mozilla requests sources.
 
-The [2026.10.15 publication handoff](releases/2026.10.15.md) includes the archive mapping, public version notes in English and French, and remaining submission steps. It incorporates the changes from the abandoned [2026.10.14 preparation](releases/2026.10.14.md), which is retained as a historical record.
+The [2026.10.16 publication handoff](releases/2026.10.16.md) includes the archive mapping, public version notes in English and French, and remaining submission steps. Earlier handoffs, including [2026.10.15](releases/2026.10.15.md) and the abandoned [2026.10.14 preparation](releases/2026.10.14.md), are retained as historical records.
 
 [Versioned release notes](../release-notes/) are the authoritative change history. Select the notes for the version being submitted; `release-notes/unreleased.md` describes pending work and is not a published release. Keep release notes out of the listing files to avoid parallel histories.
 

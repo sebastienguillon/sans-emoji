@@ -1,6 +1,6 @@
 # Store images
 
-Upload PNG files from this folder. These assets show **Sans Emoji 2026.10.15** and use the existing cream, olive, system typography, and crossed-out emoji icon from the documentation site. Promotional tiles contain only the product name, so either listing language can use them.
+Upload PNG files from this folder. These assets show **Sans Emoji 2026.10.15** and remain current for 2026.10.16, which changes only the Firefox minimum version. They use the existing cream, olive, system typography, and crossed-out emoji icon from the documentation site. Promotional tiles contain only the product name, so either listing language can use them.
 
 ## Upload map
 
@@ -58,4 +58,4 @@ The filenames use the version read from the built manifest. Before capturing a n
 
 This folder and the capture tool are included in the Firefox review source ZIP, not the installed extension ZIP. See the [2026.10.15 release notes](../../release-notes/2026.10.15.md) for this submission-material update.
 
-Historical assets remain available for reference. The original `2026.10.10-*.png` images have their provenance in [2026.10.10-capture.json](2026.10.10-capture.json); they were prepared after the `v2026.10.10` tag, which is unchanged. The abandoned `2026.10.14` preparation retains its `2026.10.14-*.png` images and [2026.10.14-capture.json](2026.10.14-capture.json). Use the current upload map for the replacement 2026.10.15 submission.
+Historical assets remain available for reference. The original `2026.10.10-*.png` images have their provenance in [2026.10.10-capture.json](2026.10.10-capture.json); they were prepared after the `v2026.10.10` tag, which is unchanged. The abandoned `2026.10.14` preparation retains its `2026.10.14-*.png` images and [2026.10.14-capture.json](2026.10.14-capture.json). Use the current upload map for the 2026.10.16 submission.
