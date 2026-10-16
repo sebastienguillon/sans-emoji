@@ -31,7 +31,7 @@ These are the intended GitHub Pages URLs. Confirm that they load publicly before
 
 ## Reviewer instructions
 
-The same `dist/sans-emoji.zip` is used for Chrome and Firefox. Firefox requires version 140 or later. The extension has no settings, toolbar popup, or account of its own, but testing in a live Atlassian editor requires access to the underlying site. Provide reviewers with a dedicated test account and an editable test page containing only sample content. Do not assume they have their own Atlassian account or access to your tenant. Mozilla's [submission guidelines](https://extensionworkshop.com/documentation/publish/add-on-policies/#submission-guidelines) require testing credentials when an account is needed for any part of an add-on's functionality.
+The same `dist/sans-emoji.zip` is used for Chrome and Firefox. Firefox requires version 142 or later. The extension has no settings, toolbar popup, or account of its own, but testing in a live Atlassian editor requires access to the underlying site. Provide reviewers with a dedicated test account and an editable test page containing only sample content. Do not assume they have their own Atlassian account or access to your tenant. Mozilla's [submission guidelines](https://extensionworkshop.com/documentation/publish/add-on-policies/#submission-guidelines) require testing credentials when an account is needed for any part of an add-on's functionality.
 
 1. Install the extension and refresh the supported editor page.
 2. Type `Bonjour : suite`, including variants with non-breaking spaces. The recognized suggestion panel should remain hidden and the text should remain intact.
@@ -45,7 +45,7 @@ Known limitations: internal editor markup may change; custom domains are outside
 - **Version notes:** enter the user-visible features, fixes, and relevant limitations from the matching [versioned release notes](../release-notes/). For `2026.10.15`, use the prepared public notes in [its release handoff](releases/2026.10.15.md); the planned `2026.10.14` release was abandoned. These notes must also be entered in the dashboard; including the Markdown file in the source ZIP does not fill the field. Do not paste development history, validation logs, or credentials into public version notes.
 - **Notes to Reviewer:** use the template below. Copy it into AMO's private reviewer field, then replace the placeholders there. Supply a supported HTTPS test-site URL, exact editor location, dedicated test username/password, and any additional login steps. Verify the account can log in and edit the sample page from a fresh browser session, and keep access working during review. Do not put credentials in this repository, either ZIP, public release notes, or listing copy.
 - **Source code:** upload `dist/sans-emoji-sources.zip` separately, because the extension's TypeScript is bundled into JavaScript. Include the build instructions below in the reviewer notes.
-- **Validation report:** open the full report and read the actual warning. A checklist reminder does not establish which technical warning was reported. Local validation's desktop-only Android exception does not prove AMO's warning is the same.
+- **Validation report:** open the full report and read any actual warning. A checklist reminder does not establish which technical warning was reported. Local validation fails on every linter warning, but AMO may run a newer linter, so a clean local run does not prove AMO's report is clean.
 
 The fixture screenshots and automated tests are supporting evidence, not a replacement for live reviewer access. No test tenant or reviewer account has been provisioned by preparing these files.
 
@@ -54,7 +54,7 @@ The fixture screenshots and automated tests are supporting evidence, not a repla
 Complete this in the AMO dashboard. Do not submit the placeholders as working access details.
 
 ```text
-Sans Emoji runs automatically in supported Atlassian editors. It has no settings or toolbar popup. Desktop Firefox 140 or later is required.
+Sans Emoji runs automatically in supported Atlassian editors. It has no settings or toolbar popup. Desktop Firefox 142 or later is required.
 
 Dedicated test access:
 Test site: [supported HTTPS Atlassian site]

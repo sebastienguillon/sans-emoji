@@ -23,7 +23,7 @@ export async function buildProject(root: string): Promise<void> {
     bundle: true,
     format: "iife",
     platform: "browser",
-    target: ["chrome120", "firefox140"],
+    target: ["chrome120", "firefox142"],
     legalComments: "none",
     logLevel: "silent",
   });

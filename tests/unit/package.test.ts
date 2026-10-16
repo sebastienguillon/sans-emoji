@@ -151,7 +151,7 @@ it("creates only a shared extension ZIP and reproducible Firefox review sources"
     JSON.parse(strFromU8(manifest)).browser_specific_settings.gecko,
   ).toEqual({
     id: "sans-emoji@extensions.local",
-    strict_min_version: "140.0",
+    strict_min_version: "142.0",
     data_collection_permissions: { required: ["none"] },
   });
   // Repack the extracted sources in a different directory, without Git metadata.

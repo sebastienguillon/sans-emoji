@@ -30,7 +30,7 @@ See Google's [unpacked extension installation guide](https://developer.chrome.co
 
 ### Firefox
 
-Use Firefox **140 or later**.
+Use Firefox **142 or later**.
 
 1. Open `about:debugging#/runtime/this-firefox`.
 2. Choose **Load Temporary Add-on** and select `dist/manifest.json`.
@@ -172,7 +172,7 @@ Use pnpm consistently and keep `pnpm-lock.yaml`. All executable project code is 
 
 `pnpm lint:ext` uses pinned `web-ext` with personal configuration discovery disabled. It checks the existing build and does not rebuild or change its files; ZIPs in `dist/` are ignored by web-ext's default file rules. Run `pnpm build` first when the output is missing or stale. Mozilla's [linter](https://extensionworkshop.com/documentation/develop/web-ext-command-reference/#web-ext-lint) checks manifest and extension compatibility, but is not store approval or a substitute for browser tests.
 
-One diagnostic is explicitly reported as inapplicable: `KEY_FIREFOX_ANDROID_UNSUPPORTED_BY_MIN_VERSION` in `manifest.json`, only while the manifest has no `gecko_android` entry. Mozilla [requires that entry to enable Android distribution](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/browser_specific_settings#firefox_gecko_properties), but the linter checks Android minimums even for this desktop-only extension. All errors and other warnings fail validation. Adding Android support makes that warning fatal too; do not widen this exception to hide compatibility problems.
+All errors and warnings fail validation, with no exceptions, so local results match the warnings shown in Mozilla's add-on validation report. The linter checks Android minimums even though the manifest has no `gecko_android` entry and Android distribution is [not enabled](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/browser_specific_settings#firefox_gecko_properties). Without that entry it takes the Android minimum from `gecko.strict_min_version`. Firefox for Android first supported the required `data_collection_permissions` key in version 142, so the minimum is 142.0 rather than 140.0.
 
 ### TypeScript environments
 
@@ -204,7 +204,7 @@ Tests may import browser code, but the separate browser check still rejects acci
 | `tsconfig*.json` | Shared strictness, browser source, and Node tooling configurations |
 | `AGENTS.md` | Project conventions and release requirements |
 
-esbuild targets Chrome 120 and Firefox 140 and produces one standalone content script. The build copies the shared manifest unchanged, including Firefox's extension ID, minimum version, and no-data declaration. Chrome [ignores `browser_specific_settings`](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/browser_specific_settings).
+esbuild targets Chrome 120 and Firefox 142 and produces one standalone content script. The build copies the shared manifest unchanged, including Firefox's extension ID, minimum version, and no-data declaration. Chrome [ignores `browser_specific_settings`](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/browser_specific_settings).
 
 ### Tests and their limits
 
@@ -218,7 +218,7 @@ On Linux, Playwright may also need system libraries; CI installs them with `pnpm
 
 Every TypeScript file in `src/`, `tooling/`, and `scripts/` must reach **100% statements, branches, functions, and lines**, per file. There are no coverage-ignore directives or production-code exclusions. Fixtures, declarative configuration, generated bundles, and dependencies are outside that denominator. Reports are written to `coverage/index.html`, `coverage/lcov.info`, and `coverage/coverage-summary.json`.
 
-Unit tests cover domain boundaries, caret checks, French spacing, focus, IME handling, retries, and cleanup. Extension-validation tests enforce warning/error failures, the narrowly scoped Android exception, and process/file failure handling. Build and packaging tests use temporary projects, reject missing inputs and symlinks in source archives, check stale-output cleanup, and rebuild extracted sources to reproduce both ZIPs byte for byte. They verify that store materials and every TypeScript configuration are included in review sources, while store and website files stay out of the installed extension. jsdom fixtures supply layout and `isContentEditable`, which jsdom does not implement.
+Unit tests cover domain boundaries, caret checks, French spacing, focus, IME handling, retries, and cleanup. Extension-validation tests enforce warning/error failures, including Android minimum-version warnings, and process failure handling. Build and packaging tests use temporary projects, reject missing inputs and symlinks in source archives, check stale-output cleanup, and rebuild extracted sources to reproduce both ZIPs byte for byte. They verify that store materials and every TypeScript configuration are included in review sources, while store and website files stay out of the installed extension. jsdom fixtures supply layout and `isContentEditable`, which jsdom does not implement.
 
 Chromium tests load the actual unpacked extension. Firefox tests inject the compiled script and stylesheet; they do not test Firefox add-on installation or signing. Both use local HTML fixtures with intercepted requests and never access an Atlassian account. They check typing, Enter/Tab, mentions, slash commands, toolbar pickers, domain scope, frames, IME handling, Atlaskit-style decoration marks with next-frame focus, and popup visibility and scroll dimensions at mount and on animation frames. Playwright writes its report to `playwright-report/` and retains traces for failed tests.
 
